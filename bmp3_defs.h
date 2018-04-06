@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2017 Bosch Sensortec GmbH
+ * Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,8 +40,8 @@
  * patent rights of the copyright holder.
  *
  * @file	bmp3_defs.h
- * @date	04 Dec 2017
- * @version	1.0.0
+ * @date	05 Apr 2018
+ * @version	1.1.0
  * @brief
  *
  */
@@ -54,6 +54,12 @@
  * @{*/
 #ifndef BMP3_DEFS_H_
 #define BMP3_DEFS_H_
+
+/*! CPP guard */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /********************************************************/
 /* header includes */
@@ -98,13 +104,20 @@
 #endif
 #endif
 
+#ifndef TRUE
 #define TRUE                UINT8_C(1)
+#endif
+
+#ifndef FALSE
 #define FALSE               UINT8_C(0)
+#endif
 
 /********************************************************/
 /**\name Compiler switch macros */
-/**\name Comment the below line to use fixed-point compensation */
-/* #define FLOATING_POINT_COMPENSATION */
+/**\name Uncomment the below line to use floating-point compensation */
+#ifndef BMP3_DOUBLE_PRECISION_COMPENSATION
+/* #define BMP3_DOUBLE_PRECISION_COMPENSATION */
+#endif
 
 /********************************************************/
 /**\name Macro definitions */
@@ -617,7 +630,7 @@ struct bmp3_fifo {
 	struct bmp3_fifo_settings settings;
 };
 
-#ifdef FLOATING_POINT_COMPENSATION
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
 /*!
  * @brief Quantized Trim Variables
  */
@@ -626,21 +639,21 @@ struct bmp3_quantized_calib_data {
  * @ Quantized Trim Variables
  */
 /**@{*/
-	float par_t1;
-	float par_t2;
-	float par_t3;
-	float par_p1;
-	float par_p2;
-	float par_p3;
-	float par_p4;
-	float par_p5;
-	float par_p6;
-	float par_p7;
-	float par_p8;
-	float par_p9;
-	float par_p10;
-	float par_p11;
-	float t_lin;
+	double par_t1;
+	double par_t2;
+	double par_t3;
+	double par_p1;
+	double par_p2;
+	double par_p3;
+	double par_p4;
+	double par_p5;
+	double par_p6;
+	double par_p7;
+	double par_p8;
+	double par_p9;
+	double par_p10;
+	double par_p11;
+	double t_lin;
 /**@}*/
 };
 
@@ -660,9 +673,9 @@ struct bmp3_calib_data {
  */
 struct bmp3_data {
 	/*! Compensated temperature */
-	float temperature;
+	double temperature;
 	/*! Compensated pressure */
-	float pressure;
+	double pressure;
 };
 
 #else
@@ -685,7 +698,7 @@ struct bmp3_calib_data {
 	struct bmp3_reg_calib_data reg_calib_data;
 };
 
-#endif /* BMP3_USE_FLOATING_POINT */
+#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
 
 /*!
  * @brief bmp3 sensor structure which comprises of uncompensated temperature
@@ -725,6 +738,10 @@ struct bmp3_dev {
 	/*! FIFO data and settings structure */
 	struct bmp3_fifo *fifo;
 };
+
+#ifdef __cplusplus
+}
+#endif /* End of CPP guard */
 
 #endif /* BMP3_DEFS_H_ */
 /** @}*/

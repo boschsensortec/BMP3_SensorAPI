@@ -1,5 +1,5 @@
 /**\mainpage
- * Copyright (C) 2016 - 2017 Bosch Sensortec GmbH
+ * Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,8 +40,8 @@
  * patent rights of the copyright holder.
  *
  * File		bmp3.c
- * Date		04 Dec 2017
- * Version	1.0.0
+ * Date		05 Apr 2018
+ * Version	1.1.0
  *
  */
 
@@ -142,7 +142,7 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *
  */
 static int8_t compensate_data(uint8_t sensor_comp, const struct bmp3_uncomp_data *uncomp_data,
 			      struct bmp3_data *comp_data, struct bmp3_calib_data *calib_data);
-#ifdef FLOATING_POINT_COMPENSATION
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
 /*!
  * @brief This internal API is used to compensate the raw temperature data and
  * return the compensated temperature data.
@@ -151,9 +151,9 @@ static int8_t compensate_data(uint8_t sensor_comp, const struct bmp3_uncomp_data
  * @param[in] calib_data : Pointer to calibration data structure.
  *
  * @return Compensated temperature data.
- * @retval Compensated temperature data in float.
+ * @retval Compensated temperature data in double.
  */
-static float compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
+static double compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
 					struct bmp3_calib_data *calib_data);
 
 /*!
@@ -164,22 +164,22 @@ static float compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
  * @param[in] calib_data : Pointer to the calibration data structure.
  *
  * @return Compensated pressure data.
- * @retval Compensated pressure data in float.
+ * @retval Compensated pressure data in double.
  */
-static float compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
+static double compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
 					const struct bmp3_calib_data *calib_data);
 
 /*!
  * @brief This internal API is used to calculate the power functionality for
- * floating point values.
+ * double precision floating point values.
  *
  * @param[in] base : Contains the base value.
  * @param[in] power : Contains the power value.
  *
  * @return Output of power function.
- * @retval Calculated power function output in float.
+ * @retval Calculated power function output in double.
  */
-static float bmp3_pow(float base, uint8_t power);
+static double bmp3_pow(double base, uint8_t power);
 #else
 /*!
  * @brief This internal API is used to compensate the raw temperature data and
@@ -217,7 +217,7 @@ static uint64_t compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
  * @retval Calculated power function output in integer.
  */
 static uint32_t bmp3_pow(uint8_t base, uint8_t power);
-#endif
+#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
 
 
 /*!
@@ -1837,13 +1837,13 @@ static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev)
 {
 	uint16_t press_meas_t;
 	struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
-#ifdef FLOATING_POINT_COMPENSATION
-	float base = 2.0;
-	float partial_out;
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
+	double base = 2.0;
+	double partial_out;
 #else
 	uint8_t base = 2;
 	uint32_t partial_out;
-#endif
+#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
 
 	partial_out = bmp3_pow(base, odr_filter.press_os);
 	press_meas_t = (uint16_t)(BMP3_PRESS_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
@@ -1861,13 +1861,13 @@ static uint16_t calculate_temp_meas_time(const struct bmp3_dev *dev)
 {
 	uint16_t temp_meas_t;
 	struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
-#ifdef FLOATING_POINT_COMPENSATION
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
 	float base = 2.0;
 	float partial_out;
 #else
 	uint8_t base = 2;
 	uint32_t partial_out;
-#endif
+#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
 
 	partial_out = bmp3_pow(base, odr_filter.temp_os);
 	temp_meas_t = (uint16_t)(BMP3_TEMP_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
@@ -1988,7 +1988,7 @@ static int8_t compensate_data(uint8_t sensor_comp, const struct bmp3_uncomp_data
 	return rslt;
 }
 
-#ifdef FLOATING_POINT_COMPENSATION
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
 /*!
  *  @brief This internal API is used to parse the calibration data, compensates
  *  it and store it in device structure
@@ -1999,80 +1999,80 @@ static void parse_calib_data(const uint8_t *reg_data, struct bmp3_dev *dev)
 	struct bmp3_reg_calib_data *reg_calib_data = &dev->calib_data.reg_calib_data;
 	struct bmp3_quantized_calib_data *quantized_calib_data = &dev->calib_data.quantized_calib_data;
 	/* Temporary variable */
-	float temp_var;
+	double temp_var;
 
 	/* 1 / 2^8 */
 	temp_var = 0.00390625f;
 	reg_calib_data->par_t1 = BMP3_CONCAT_BYTES(reg_data[1], reg_data[0]);
-	quantized_calib_data->par_t1 = ((float)reg_calib_data->par_t1 / temp_var);
+	quantized_calib_data->par_t1 = ((double)reg_calib_data->par_t1 / temp_var);
 
 	reg_calib_data->par_t2 = BMP3_CONCAT_BYTES(reg_data[3], reg_data[2]);
 	temp_var = 1073741824.0f;
-	quantized_calib_data->par_t2 = ((float)reg_calib_data->par_t2 / temp_var);
+	quantized_calib_data->par_t2 = ((double)reg_calib_data->par_t2 / temp_var);
 
 	reg_calib_data->par_t3 = (int8_t)reg_data[4];
 	temp_var = 281474976710656.0f;
-	quantized_calib_data->par_t3 = ((float)reg_calib_data->par_t3 / temp_var);
+	quantized_calib_data->par_t3 = ((double)reg_calib_data->par_t3 / temp_var);
 
 	reg_calib_data->par_p1 = (int16_t)BMP3_CONCAT_BYTES(reg_data[6], reg_data[5]);
 	temp_var = 1048576.0f;
-	quantized_calib_data->par_p1 = ((float)(reg_calib_data->par_p1 - (16384)) / temp_var);
+	quantized_calib_data->par_p1 = ((double)(reg_calib_data->par_p1 - (16384)) / temp_var);
 
 	reg_calib_data->par_p2 = (int16_t)BMP3_CONCAT_BYTES(reg_data[8], reg_data[7]);
 	temp_var = 536870912.0f;
-	quantized_calib_data->par_p2 = ((float)(reg_calib_data->par_p2 - (16384)) / temp_var);
+	quantized_calib_data->par_p2 = ((double)(reg_calib_data->par_p2 - (16384)) / temp_var);
 
 	reg_calib_data->par_p3 = (int8_t)reg_data[9];
 	temp_var = 4294967296.0f;
-	quantized_calib_data->par_p3 = ((float)reg_calib_data->par_p3 / temp_var);
+	quantized_calib_data->par_p3 = ((double)reg_calib_data->par_p3 / temp_var);
 
 	reg_calib_data->par_p4 = (int8_t)reg_data[10];
 	temp_var = 137438953472.0f;
-	quantized_calib_data->par_p4 = ((float)reg_calib_data->par_p4 / temp_var);
+	quantized_calib_data->par_p4 = ((double)reg_calib_data->par_p4 / temp_var);
 
 	reg_calib_data->par_p5 = BMP3_CONCAT_BYTES(reg_data[12], reg_data[11]);
 	/* 1 / 2^3 */
 	temp_var = 0.125f;
-	quantized_calib_data->par_p5 = ((float)reg_calib_data->par_p5 / temp_var);
+	quantized_calib_data->par_p5 = ((double)reg_calib_data->par_p5 / temp_var);
 
 	reg_calib_data->par_p6 = BMP3_CONCAT_BYTES(reg_data[14],  reg_data[13]);
 	temp_var = 64.0f;
-	quantized_calib_data->par_p6 = ((float)reg_calib_data->par_p6 / temp_var);
+	quantized_calib_data->par_p6 = ((double)reg_calib_data->par_p6 / temp_var);
 
 	reg_calib_data->par_p7 = (int8_t)reg_data[15];
 	temp_var = 256.0f;
-	quantized_calib_data->par_p7 = ((float)reg_calib_data->par_p7 / temp_var);
+	quantized_calib_data->par_p7 = ((double)reg_calib_data->par_p7 / temp_var);
 
 	reg_calib_data->par_p8 = (int8_t)reg_data[16];
 	temp_var = 32768.0f;
-	quantized_calib_data->par_p8 = ((float)reg_calib_data->par_p8 / temp_var);
+	quantized_calib_data->par_p8 = ((double)reg_calib_data->par_p8 / temp_var);
 
 	reg_calib_data->par_p9 = (int16_t)BMP3_CONCAT_BYTES(reg_data[18], reg_data[17]);
 	temp_var = 281474976710656.0f;
-	quantized_calib_data->par_p9 = ((float)reg_calib_data->par_p9 / temp_var);
+	quantized_calib_data->par_p9 = ((double)reg_calib_data->par_p9 / temp_var);
 
 	reg_calib_data->par_p10 = (int8_t)reg_data[19];
 	temp_var = 281474976710656.0f;
-	quantized_calib_data->par_p10 = ((float)reg_calib_data->par_p10 / temp_var);
+	quantized_calib_data->par_p10 = ((double)reg_calib_data->par_p10 / temp_var);
 
 	reg_calib_data->par_p11 = (int8_t)reg_data[20];
 	temp_var = 36893488147419103232.0f;
-	quantized_calib_data->par_p11 = ((float)reg_calib_data->par_p11 / temp_var);
+	quantized_calib_data->par_p11 = ((double)reg_calib_data->par_p11 / temp_var);
 }
 
 /*!
  * @brief This internal API is used to compensate the raw temperature data and
- * return the compensated temperature data in float data type.
+ * return the compensated temperature data in double data type.
  */
-static float compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
+static double compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
 						struct bmp3_calib_data *calib_data)
 {
 	uint32_t uncomp_temp = uncomp_data->temperature;
-	float partial_data1;
-	float partial_data2;
+	double partial_data1;
+	double partial_data2;
 
-	partial_data1 = (float)(uncomp_temp - calib_data->quantized_calib_data.par_t1);
-	partial_data2 = (float)(partial_data1 * calib_data->quantized_calib_data.par_t2);
+	partial_data1 = (double)(uncomp_temp - calib_data->quantized_calib_data.par_t1);
+	partial_data2 = (double)(partial_data1 * calib_data->quantized_calib_data.par_t2);
 	/* Update the compensated temperature in calib structure since this is
 	   needed for pressure calculation */
 	calib_data->quantized_calib_data.t_lin = partial_data2 + (partial_data1 * partial_data1)
@@ -2084,21 +2084,21 @@ static float compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
 
 /*!
  * @brief This internal API is used to compensate the raw pressure data and
- * return the compensated pressure data in float data type.
+ * return the compensated pressure data in double data type.
  */
-static float compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
+static double compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
 					const struct bmp3_calib_data *calib_data)
 {
 	const struct bmp3_quantized_calib_data *quantized_calib_data = &calib_data->quantized_calib_data;
 	/* Variable to store the compensated pressure */
-	float comp_press;
+	double comp_press;
 	/* Temporary variables used for compensation */
-	float partial_data1;
-	float partial_data2;
-	float partial_data3;
-	float partial_data4;
-	float partial_out1;
-	float partial_out2;
+	double partial_data1;
+	double partial_data2;
+	double partial_data3;
+	double partial_data4;
+	double partial_out1;
+	double partial_out2;
 
 	partial_data1 = quantized_calib_data->par_p6 * quantized_calib_data->t_lin;
 	partial_data2 = quantized_calib_data->par_p7 * bmp3_pow(quantized_calib_data->t_lin, 2);
@@ -2111,10 +2111,10 @@ static float compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
 	partial_out2 = uncomp_data->pressure *
 			(quantized_calib_data->par_p1 + partial_data1 + partial_data2 + partial_data3);
 
-	partial_data1 = bmp3_pow((float)uncomp_data->pressure, 2);
+	partial_data1 = bmp3_pow((double)uncomp_data->pressure, 2);
 	partial_data2 = quantized_calib_data->par_p9 + quantized_calib_data->par_p10 * quantized_calib_data->t_lin;
 	partial_data3 = partial_data1 * partial_data2;
-	partial_data4 = partial_data3 + bmp3_pow((float)uncomp_data->pressure, 3) * quantized_calib_data->par_p11;
+	partial_data4 = partial_data3 + bmp3_pow((double)uncomp_data->pressure, 3) * quantized_calib_data->par_p11;
 	comp_press = partial_out1 + partial_out2 + partial_data4;
 
 	return comp_press;
@@ -2122,11 +2122,11 @@ static float compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
 
 /*!
  * @brief This internal API is used to calculate the power functionality for
- * floating point values.
+ * double precision floating point values.
  */
-static float bmp3_pow(float base, uint8_t power)
+static double bmp3_pow(double base, uint8_t power)
 {
-	float pow_output = 1;
+	double pow_output = 1;
 
 	while (power != 0) {
 		pow_output = base * pow_output;

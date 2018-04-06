@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2017 Bosch Sensortec GmbH
+ * Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,8 +40,8 @@
  * patent rights of the copyright holder.
  *
  * @file	bmp3.h
- * @date	04 Dec 2017
- * @version	1.0.0
+ * @date	05 Apr 2018
+ * @version	1.1.0
  * @brief
  *
  */
@@ -57,6 +57,11 @@
 /* Header includes */
 #include "bmp3_defs.h"
 
+/*! CPP guard */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /*!
  *  @brief This API is the entry point.
@@ -316,6 +321,10 @@ int8_t bmp3_get_status(struct bmp3_dev *dev);
  * @retval zero -> Success / -ve value -> Error.
  */
 int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
+
+#ifdef __cplusplus
+}
+#endif /* End of CPP guard */
 
 #endif /* BMP3_H_ */
 /** @}*/
