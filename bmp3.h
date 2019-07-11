@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
+ * Copyright (C) 2018 - 2019 Bosch Sensortec GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -39,15 +39,16 @@
  * No license is granted by implication or otherwise under any patent or
  * patent rights of the copyright holder.
  *
- * @file	bmp3.h
- * @date	05 Apr 2018
- * @version	1.1.0
+ * @file    bmp3.h
+ * @date    01 July 2019
+ * @version 1.1.3
  * @brief
  *
  */
 
 /*! @file bmp3.h
-    @brief Sensor driver for BMP3 sensor */
+ * @brief Sensor driver for BMP3 sensor */
+
 /*!
  * @defgroup BMP3 SENSOR API
  * @{*/
@@ -59,8 +60,7 @@
 
 /*! CPP guard */
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*!
@@ -98,7 +98,7 @@ int8_t bmp3_soft_reset(const struct bmp3_dev *dev);
  * desired settings. User can do OR operation of these macros for configuring
  * multiple settings.
  *
- * Macros		  |   Functionality
+ * Macros         |   Functionality
  * -----------------------|----------------------------------------------
  * BMP3_PRESS_EN_SEL    |   Enable/Disable pressure.
  * BMP3_TEMP_EN_SEL     |   Enable/Disable temperature.
@@ -184,6 +184,11 @@ int8_t bmp3_get_op_mode(uint8_t *op_mode, const struct bmp3_dev *dev);
  * @param[out] data : Structure instance of bmp3_data.
  * @param[in] dev : Structure instance of bmp3_dev.
  *
+ * @note : for fixed point the compensated temperature and pressure has a multiplication factor of 100.
+ *          units are degree celsius and Pascal respectively.
+ *          ie if temp is 2426 then temp is 24.26 deg C
+ *          if press is 9528709 it is 95287.09 Pascal.
+
  * @return Result of API execution status
  * @retval zero -> Success / +ve value -> Warning / -ve value -> Error
  */
@@ -328,4 +333,3 @@ int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
 
 #endif /* BMP3_H_ */
 /** @}*/
-

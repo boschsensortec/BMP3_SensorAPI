@@ -10,9 +10,9 @@ The sensor driver package includes bmp3.h, bmp3.c and bmp3_defs.h files
 
 File        | Version | Date
 ------------|---------|-----
-bmp3.c      |  1.1.0  | 05 Apr 2018
-bmp3.h      |  1.1.0  | 05 Apr 2018
-bmp3_defs.h |  1.1.0  | 05 Apr 2018
+bmp3.c      |  1.1.3  | 01 July 2019
+bmp3.h      |  1.1.3  | 01 July 2019
+bmp3_defs.h |  1.1.3  | 01 July 2019
 
 ## Integration details
 
@@ -187,8 +187,13 @@ int8_t get_sensor_data(struct bmp3_dev *dev)
     rslt = bmp3_get_sensor_data(sensor_comp, &data, dev);
 
     /* Print the temperature and pressure data */
-    printf("Temperature\t Pressure\t\n");
+    printf("Temperature in deg celsius\t Pressure in Pascal\t\n");
+	#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
     printf("%0.2f\t\t %0.2f\t\t\n",data.temperature, data.pressure);
+	#else
+	/* for fixed point the compensated temperature and pressure output has a multiplication factor of 100 */
+    printf("%lld\t\t %llu\t\t\n",data.temperature, data.pressure);
+	#endif
 
     return rslt;
 }
@@ -253,13 +258,14 @@ int8_t configure_and_get_fifo_data(struct bmp3_dev *dev)
         rslt = bmp3_get_fifo_data(dev);
         rslt = bmp3_extract_fifo_data(sensor_data, dev);
         printf("FIFO data\n");
-        printf("Temp\tPress\n");
+        printf("Temp in deg celsius \tPress in Pascal\n");
         /* Print the fifo data */
         for (i = 0; i < dev->fifo->data.req_frames; i++) {
-#ifdef FLOATING_POINT_COMPENSATION
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
             printf("%0.2f\t%0.2f\n", sensor_data[i].temperature,sensor_data[i].pressure);
 #else
-            printf("%lld\t%lld\n", sensor_data[i].temperature,sensor_data[i].pressure);
+			/* for fixed point the compensated temperature and pressure output has a multiplication factor of 100 */
+            printf("%lld\t%llu\n", sensor_data[i].temperature,sensor_data[i].pressure);
 #endif
         }
     } else {
