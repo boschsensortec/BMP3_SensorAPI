@@ -40,13 +40,14 @@
  * patent rights of the copyright holder.
  *
  * @File     bmp38x_selftest.c
- * @date    01 July 2019
- * @version 1.1.3
+ * @date    10 sept 2019
+ * @version 1.1.4
  *
  */
 
 #include "bmp3_selftest.h"
 
+#ifndef BMP3_DOUBLE_PRECISION_COMPENSATION
 /* 0 degree celsius */
 #define BMP3_MIN_TEMPERATURE INT16_C(0)
 
@@ -59,6 +60,19 @@
 /* 1100 hecto Pascals */
 #define BMP3_MAX_PRESSURE    UINT32_C(110000)
 
+#else
+/* 0 degree celsius */
+#define BMP3_MIN_TEMPERATURE        (0.0f)
+
+/* 40 degree celsius */
+#define BMP3_MAX_TEMPERATURE        (40.0f)
+
+/* 900 hecto Pascals */
+#define BMP3_MIN_PRESSURE           (900.0f)
+
+/* 1100 hecto Pascals */
+#define BMP3_MAX_PRESSURE           (1100.0f)
+#endif
 /*!
  * @brief       Function to analyze the sensor data
  *

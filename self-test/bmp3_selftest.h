@@ -40,8 +40,8 @@
  * patent rights of the copyright holder.
  *
  * @file    bmp3_selftest.h
- * @date    01 July 2019
- * @version 1.1.3
+ * @date    10 sept 2019
+ * @version 1.1.4
  * @brief
  *
  */
