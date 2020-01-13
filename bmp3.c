@@ -1,49 +1,40 @@
-/**\mainpage
- * Copyright (C) 2018 - 2019 Bosch Sensortec GmbH
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * Neither the name of the copyright holder nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER
- * OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
- *
- * The information provided is believed to be accurate and reliable.
- * The copyright holder assumes no responsibility
- * for the consequences of use
- * of such information nor for any infringement of patents or
- * other rights of third parties which may result from its use.
- * No license is granted by implication or otherwise under any patent or
- * patent rights of the copyright holder.
- *
- * File     bmp3.c
- * @date    01 July 2019
- * @version 1.1.3
- *
- */
+/**
+* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+*
+* BSD-3-Clause
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* 3. Neither the name of the copyright holder nor the names of its
+*    contributors may be used to endorse or promote products derived from
+*    this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+*
+* @file bmp3.c
+* @date 10/01/2020
+* @version  1.2.1
+*
+*/
 
 /*! @file bmp3.c
  * @brief Sensor driver for BMP3 sensor */
@@ -192,7 +183,7 @@ static double compensate_pressure(const struct bmp3_uncomp_data *uncomp_data, co
  * @return Output of power function.
  * @retval Calculated power function output in float.
  */
-static float bmp3_pow(double base, uint8_t power);
+static float pow_bmp3(double base, uint8_t power);
 
 #else
 
@@ -230,7 +221,7 @@ static uint64_t compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
  * @return Output of power function.
  * @retval Calculated power function output in integer.
  */
-static uint32_t bmp3_pow(uint8_t base, uint8_t power);
+static uint32_t pow_bmp3(uint8_t base, uint8_t power);
 
 #endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
 
@@ -2018,7 +2009,7 @@ static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev)
     uint8_t base = 2;
     uint32_t partial_out;
 #endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
-    partial_out = bmp3_pow(base, odr_filter.press_os);
+    partial_out = pow_bmp3(base, odr_filter.press_os);
     press_meas_t = (uint16_t)(BMP3_PRESS_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
 
     /* convert into mill seconds */
@@ -2043,7 +2034,7 @@ static uint16_t calculate_temp_meas_time(const struct bmp3_dev *dev)
     uint8_t base = 2;
     uint32_t partial_out;
 #endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
-    partial_out = bmp3_pow(base, odr_filter.temp_os);
+    partial_out = pow_bmp3(base, odr_filter.temp_os);
     temp_meas_t = (uint16_t)(BMP3_TEMP_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
 
     /* convert into mill seconds */
@@ -2286,18 +2277,18 @@ static double compensate_pressure(const struct bmp3_uncomp_data *uncomp_data, co
     double partial_out2;
 
     partial_data1 = quantized_calib_data->par_p6 * quantized_calib_data->t_lin;
-    partial_data2 = quantized_calib_data->par_p7 * bmp3_pow(quantized_calib_data->t_lin, 2);
-    partial_data3 = quantized_calib_data->par_p8 * bmp3_pow(quantized_calib_data->t_lin, 3);
+    partial_data2 = quantized_calib_data->par_p7 * pow_bmp3(quantized_calib_data->t_lin, 2);
+    partial_data3 = quantized_calib_data->par_p8 * pow_bmp3(quantized_calib_data->t_lin, 3);
     partial_out1 = quantized_calib_data->par_p5 + partial_data1 + partial_data2 + partial_data3;
     partial_data1 = quantized_calib_data->par_p2 * quantized_calib_data->t_lin;
-    partial_data2 = quantized_calib_data->par_p3 * bmp3_pow(quantized_calib_data->t_lin, 2);
-    partial_data3 = quantized_calib_data->par_p4 * bmp3_pow(quantized_calib_data->t_lin, 3);
+    partial_data2 = quantized_calib_data->par_p3 * pow_bmp3(quantized_calib_data->t_lin, 2);
+    partial_data3 = quantized_calib_data->par_p4 * pow_bmp3(quantized_calib_data->t_lin, 3);
     partial_out2 = uncomp_data->pressure *
                    (quantized_calib_data->par_p1 + partial_data1 + partial_data2 + partial_data3);
-    partial_data1 = bmp3_pow((double)uncomp_data->pressure, 2);
+    partial_data1 = pow_bmp3((double)uncomp_data->pressure, 2);
     partial_data2 = quantized_calib_data->par_p9 + quantized_calib_data->par_p10 * quantized_calib_data->t_lin;
     partial_data3 = partial_data1 * partial_data2;
-    partial_data4 = partial_data3 + bmp3_pow((double)uncomp_data->pressure, 3) * quantized_calib_data->par_p11;
+    partial_data4 = partial_data3 + pow_bmp3((double)uncomp_data->pressure, 3) * quantized_calib_data->par_p11;
     comp_press = partial_out1 + partial_out2 + partial_data4;
 
     return comp_press;
@@ -2307,7 +2298,7 @@ static double compensate_pressure(const struct bmp3_uncomp_data *uncomp_data, co
  * @brief This internal API is used to calculate the power functionality for
  *  floating point values.
  */
-static float bmp3_pow(double base, uint8_t power)
+static float pow_bmp3(double base, uint8_t power)
 {
     float pow_output = 1;
 
@@ -2409,8 +2400,11 @@ static uint64_t compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     partial_data2 = reg_calib_data->par_p10 * reg_calib_data->t_lin;
     partial_data3 = partial_data2 + (65536 * reg_calib_data->par_p9);
     partial_data4 = (partial_data3 * uncomp_data->pressure) / 8192;
-    /*dividing by 10 followed by multiplying by 10 to avoid overflow caused by (uncomp_data->pressure * partial_data4) */
-    partial_data5 = (uncomp_data->pressure * (partial_data4/10))/512;
+
+    /* dividing by 10 followed by multiplying by 10
+     * To avoid overflow caused by (uncomp_data->pressure * partial_data4)
+     */
+    partial_data5 = (uncomp_data->pressure * (partial_data4 / 10)) / 512;
     partial_data5 = partial_data5 * 10;
     partial_data6 = (int64_t)((uint64_t)uncomp_data->pressure * (uint64_t)uncomp_data->pressure);
     partial_data2 = (reg_calib_data->par_p11 * partial_data6) / 65536;
@@ -2424,7 +2418,7 @@ static uint64_t compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
 /*!
  * @brief This internal API is used to calculate the power functionality.
  */
-static uint32_t bmp3_pow(uint8_t base, uint8_t power)
+static uint32_t pow_bmp3(uint8_t base, uint8_t power)
 {
     uint32_t pow_output = 1;
 
