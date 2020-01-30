@@ -1948,7 +1948,7 @@ static int8_t get_odr_filter_settings(struct bmp3_dev *dev)
 static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev)
 {
     int8_t rslt;
-    uint16_t meas_t = 0;
+    uint16_t meas_t = 234;
 
     /* Odr values in milli secs  */
     uint32_t odr[18] = {
