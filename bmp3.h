@@ -61,11 +61,9 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <stddef.h>
-
+  
 /*************************** Common macros   *****************************/
-
+#include <stdint.h>
 #if !defined(UINT8_C) && !defined(INT8_C)
 #define INT8_C(x)   ((int8_t)(x))
 #define UINT8_C(x)  ((uint8_t)(x))
@@ -810,11 +808,8 @@ struct bmp3_dev {
     /*! FIFO data and settings structure */
     struct bmp3_fifo *fifo;
 
-    FAR struct bmp3_dev *flink;          /* Supports a singly linked list of drivers */
-    FAR struct i2c_master_s *i2c;        /* I2C interface */
-    int freq;                            /* BMP3 Frequency    */
-    sem_t datasem;                       /* Manages exclusive access to this structure */
-
+    struct bmp3_dev *flink;          /* Supports a singly linked list of drivers */
+    int freq;                        /* BMP3 Frequency    */
 };
 
 /*!
@@ -1081,6 +1076,8 @@ int8_t bmp3_get_status(struct bmp3_dev *dev);
  */
 int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
 
+#if defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180)
+  
 /*!
  * @brief register the driver with NuttX kernel.
  *
@@ -1094,7 +1091,7 @@ int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
  * 
  */
 int bmp3_register(FAR const char *devpath, FAR struct i2c_master_s *i2c);
-
+#endif /* !defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180) */
   
 #ifdef __cplusplus
 }

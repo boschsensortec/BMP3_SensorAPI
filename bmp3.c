@@ -39,21 +39,8 @@
 /*! @file bmp3.c
  * @brief Sensor driver for BMP3 sensor 
  */
-#include <nuttx/config.h>
-
-#include <stdlib.h>
-#include <fixedmath.h>
-#include <errno.h>
-#include <debug.h>
-#include <nuttx/kmalloc.h>
-#include <nuttx/signal.h>
-#include <nuttx/fs/fs.h>
-#include <nuttx/i2c/i2c_master.h>
-#include <nuttx/sensors/bmp3.h>
-#include <nuttx/random.h>
+#include <bmp3.h>
 #include <memory.h>
-
-#if defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180)
 
 
 /***************** Internal macros ******************************/
@@ -2669,6 +2656,7 @@ static int8_t get_err_status(struct bmp3_dev *dev)
     return rslt;
 }
 
+#if defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180)
 
 static int bmp3_open(FAR struct file *filep)
 {
