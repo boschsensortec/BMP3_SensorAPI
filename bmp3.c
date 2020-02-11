@@ -1,44 +1,60 @@
 /**
-* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
-*
-* BSD-3-Clause
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the
-*    documentation and/or other materials provided with the distribution.
-*
-* 3. Neither the name of the copyright holder nor the names of its
-*    contributors may be used to endorse or promote products derived from
-*    this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
-*
-* @file bmp3.c
-* @date 10/01/2020
-* @version  1.2.1
-*
-*/
+ * Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+ *
+ * BSD-3-Clause
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file bmp3.c
+ * @date 10/01/2020
+ * @version  1.2.1
+ *
+ */
 
 /*! @file bmp3.c
- * @brief Sensor driver for BMP3 sensor */
-#include "bmp3.h"
+ * @brief Sensor driver for BMP3 sensor 
+ */
+#include <nuttx/config.h>
+
+#include <stdlib.h>
+#include <fixedmath.h>
+#include <errno.h>
+#include <debug.h>
+#include <nuttx/kmalloc.h>
+#include <nuttx/signal.h>
+#include <nuttx/fs/fs.h>
+#include <nuttx/i2c/i2c_master.h>
+#include <nuttx/sensors/bmp3.h>
+#include <nuttx/random.h>
+#include <memory.h>
+
+#if defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180)
+
 
 /***************** Internal macros ******************************/
 /*! Power control settings */
@@ -784,7 +800,7 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint16_t len, const st
             reg_addr = reg_addr | 0x80;
 
             /* Read the data from the register */
-            rslt = dev->read(dev->dev_id, reg_addr, temp_buff, temp_len);
+            rslt = dev->read(dev, reg_addr, temp_buff, temp_len);
             for (i = 0; i < len; i++)
             {
                 reg_data[i] = temp_buff[i + dev->dummy_byte];
@@ -793,7 +809,7 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint16_t len, const st
         else
         {
             /* Read the data using I2C */
-            rslt = dev->read(dev->dev_id, reg_addr, reg_data, len);
+            rslt = dev->read(dev, reg_addr, reg_data, len);
         }
 
         /* Check for communication error */
@@ -848,7 +864,7 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, co
             {
                 temp_len = len;
             }
-            rslt = dev->write(dev->dev_id, reg_addr[0], temp_buff, temp_len);
+            rslt = dev->write(dev, reg_addr[0], temp_buff, temp_len);
 
             /* Check for communication error */
             if (rslt != BMP3_OK)
@@ -1323,9 +1339,12 @@ int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *comp_data, st
 
     /* Array to store the pressure and temperature data read from
      * the sensor */
-    uint8_t reg_data[BMP3_P_T_DATA_LEN] = { 0 };
-    struct bmp3_uncomp_data uncomp_data = { 0 };
+    uint8_t reg_data[BMP3_P_T_DATA_LEN];
+    struct bmp3_uncomp_data uncomp_data;
 
+    memset((void*)&reg_data, 0, sizeof(reg_data));
+    memset((void*)&uncomp_data, 0, sizeof(uncomp_data));
+    
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
     if ((rslt == BMP3_OK) && (comp_data != NULL))
@@ -2649,3 +2668,237 @@ static int8_t get_err_status(struct bmp3_dev *dev)
 
     return rslt;
 }
+
+
+static int bmp3_open(FAR struct file *filep)
+{
+	FAR struct inode *inode = filep->f_inode;
+	FAR struct bmp3_dev *priv = inode->i_private;
+	
+	DEBUGASSERT(priv != NULL);
+	
+	/* Perform a reset/init */	
+	return set_normal_mode(priv);
+}
+
+static int bmp3_close(FAR struct file *filep)
+{
+	FAR struct inode *inode = filep->f_inode;
+	FAR struct bmp3_dev *priv = inode->i_private;	
+	
+	DEBUGASSERT(priv != NULL);
+	
+	/* Perform a reset */	
+	
+	return OK;
+}
+
+static ssize_t bmp3_read(FAR struct file *filep, FAR char *buffer, size_t buflen)
+{
+	FAR struct inode *inode = filep->f_inode;
+	FAR struct bmp3_dev *priv = inode->i_private;	
+	int ret;
+	
+	DEBUGASSERT(priv != NULL);
+	
+	/* Variable used to select the sensor component */
+	uint8_t sensor_comp;
+
+	/* Variable used to store the compensated data */
+	struct bmp3_data sensor_data;
+	struct bmp3_data* data;
+	
+	/* Check if enough memory was provided for the read call */
+	if (buflen < sizeof(FAR struct bmp3_data))
+	{
+		snerr("ERROR: Not enough memory for reading out a "
+		      "sensor data sample (%d bytes required)\n",
+		      sizeof(FAR struct bmp3_data));
+		return -ENOSYS;
+	}
+	
+	
+	/* Aquire the semaphore before the data is copied */	
+	ret = nxsem_wait(&priv->datasem);
+	if (ret < 0)
+	{
+		snerr("ERROR: Could not aquire priv->datasem: %d\n", ret);
+		return ret;
+	}
+
+	/* Sensor component selection */
+	sensor_comp = BMP3_PRESS | BMP3_TEMP;
+	/* Temperature and Pressure data are read and stored in the bmp3_data instance */
+	ret = bmp3_get_sensor_data(sensor_comp, &sensor_data, priv);
+
+	/* Print the temperature and pressure data */
+	sninfo("Temperature in deg celsius\t Pressure in Pascal\t\n");
+
+#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
+	sninfo("%0.2f\t\t %0.2f\t\t\n",sensor_data.temperature, sensor_data.pressure);
+#else
+	/* for fixed point the compensated temperature and pressure output has a multiplication factor of 100 */
+	sninfo("%lld\t\t %llu\t\t\n",sensor_data.temperature, sensor_data.pressure);
+#endif
+
+	/* Copy the sensor data into the buffer */
+	data = (FAR struct bmp3_data*)buffer;
+	memset(data, 0, sizeof(FAR struct bmp3_data));
+	
+	data->temperature = sensor_data.temperature;
+	data->pressure = sensor_data.pressure;
+	
+	/* Give back the semaphore */	
+	nxsem_post(&priv->datasem);
+	
+	return sizeof(FAR struct bmp3_data);
+}
+
+static ssize_t bmp3_write(FAR struct file *filep, FAR const char *buffer,size_t buflen)
+{
+	return -ENOSYS;
+}
+
+static int bmp3_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
+{
+	int ret = OK;
+	
+	switch (cmd) {
+		/* Command was not recognized */
+		
+	default:
+		snerr("ERROR: Unrecognized cmd: %d\n", cmd);
+		ret = -ENOTTY;
+		break;
+	}
+	
+	return ret;	
+}
+
+static const struct file_operations g_bmp3_dev_fops =
+{
+	bmp3_open,
+	bmp3_close,
+	bmp3_read,
+	bmp3_write,
+	NULL,
+	bmp3_ioctl
+#ifndef CONFIG_DISABLE_POLL
+	, NULL
+#endif
+#ifndef CONFIG_DISABLE_PSEUDOFS_OPERATIONS
+	, NULL
+#endif
+};
+
+/* Single linked list to store instances of drivers */
+static struct bmp3_dev *g_bmp3_dev_list = 0;
+
+/* Nutt-X I2C API calls */
+
+int8_t bmp3_i2c_read(const struct bmp3_dev* dev, uint8_t reg_addr, uint8_t *buffer, uint16_t buflen)
+{
+	struct i2c_msg_s msg[2];
+	int ret = 0;
+	//sninfo("reg: %x, len=%d\n", reg_addr, buflen);
+	
+	/* Write Address */
+	msg[0].frequency = dev->freq;
+	msg[0].addr      = dev->dev_id;
+	msg[0].flags     = 0;
+	msg[0].buffer    = (FAR uint8_t *)&reg_addr;
+	msg[0].length    = 1;
+
+	/* Read back count bytes */
+	msg[1].frequency = dev->freq;
+	msg[1].addr      = dev->dev_id;
+	msg[1].flags     = I2C_M_READ;
+	msg[1].buffer    = (FAR uint8_t *)buffer;
+	msg[1].length    = buflen;
+	
+	/* Perform the actual transfer. */
+	ret = I2C_TRANSFER(dev->i2c, &msg[0], 2);
+	return (ret >= 0) ? OK : ret;
+}
+
+int8_t bmp3_i2c_write(const struct bmp3_dev* dev, uint8_t reg_addr, uint8_t *buffer, uint16_t buflen)
+{
+	struct i2c_msg_s msg[2];
+	int ret = 0;
+	
+	/* Write Address */
+	msg[0].frequency = dev->freq;
+	msg[0].addr      = dev->dev_id;
+	msg[0].flags     = 0;
+	msg[0].buffer    = (FAR uint8_t *)&reg_addr;
+	msg[0].length    = 1;
+
+	/* Write count bytes */
+	msg[1].frequency = dev->freq;
+	msg[1].addr      = dev->dev_id;
+	msg[1].flags     = 0;
+	msg[1].buffer    = (FAR uint8_t *)buffer;
+	msg[1].length    = buflen;
+	
+	/* Perform the actual transfer. */
+	ret = I2C_TRANSFER(dev->i2c, &msg[0], 2);
+	return (ret >= 0) ? OK : ret;
+}
+
+void bmp3_delay_ms(uint32_t period)
+{
+	up_mdelay(period);
+}
+
+
+
+int bmp3_register(FAR const char *devpath, FAR struct i2c_master_s *i2c)
+{
+	FAR struct bmp3_dev *priv;	
+	int ret = 0;
+	
+	priv = (FAR struct bmp3_dev *) kmm_malloc(sizeof(struct bmp3_dev));
+	if (priv == NULL) {
+		snerr("ERROR: Failed to allocate instance\n");
+		return -ENOMEM;
+	}
+	priv->i2c = i2c;
+	priv->dev_id = BMP3_I2C_ADDR_SEC;
+	priv->freq = CONFIG_BMP3_I2C_FREQUENCY;
+	priv->intf = BMP3_I2C_INTF;
+	priv->read = bmp3_i2c_read;
+	priv->write = bmp3_i2c_write;
+	priv->delay_ms = bmp3_delay_ms;
+
+	ret = bmp3_init(priv);
+	if (ret < 0) {
+		snerr("ERROR: Failed to detect device: %d\n", ret);
+		kmm_free(priv);
+		return -1;
+	}
+	
+	nxsem_init(&priv->datasem, 0, 1);     /* Initialize sensor data access */
+	
+	ret = register_driver(devpath, &g_bmp3_dev_fops, 0666, priv);
+	if (ret < 0) {
+		snerr("ERROR: Failed to register driver: %d\n", ret);
+		kmm_free(priv);
+		return ret;
+	}
+
+	sninfo("BMP3 driver loaded successfully!\n");
+
+	/* Since we support multiple BMP3 devices, we will need to add 
+	 * this new instance to a list of device instances so that it 
+	 * can be found by the interrupt handler based on the received IRQ number. 
+	 */
+	priv->flink    = g_bmp3_dev_list;
+	g_bmp3_dev_list = priv;
+
+	return ret;
+}
+
+
+
+#endif /* !defined(CONFIG_I2C) && defined(CONFIG_SENSORS_BMP180) */
+
