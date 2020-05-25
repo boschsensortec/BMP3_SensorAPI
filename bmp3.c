@@ -30,9 +30,9 @@
 * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 *
-* @file bmp3.c
-* @date 10/01/2020
-* @version  1.2.1
+* @file       bmp3.c
+* @date       2020-05-21
+* @version    v1.2.4
 *
 */
 
@@ -42,47 +42,47 @@
 
 /***************** Internal macros ******************************/
 /*! Power control settings */
-#define POWER_CNTL            UINT16_C(0x0006)
+#define POWER_CNTL             UINT16_C(0x0006)
 
 /*! Odr and filter settings */
-#define ODR_FILTER            UINT16_C(0x00F0)
+#define ODR_FILTER             UINT16_C(0x00F0)
 
 /*! Interrupt control settings */
-#define INT_CTRL              UINT16_C(0x0708)
+#define INT_CTRL               UINT16_C(0x0708)
 
 /*! Advance settings */
-#define ADV_SETT              UINT16_C(0x1800)
+#define ADV_SETT               UINT16_C(0x1800)
 
 /*! FIFO settings */
 
 /*! Mask for fifo_mode, fifo_stop_on_full, fifo_time_en, fifo_press_en and
  * fifo_temp_en settings */
-#define FIFO_CONFIG_1         UINT16_C(0x003E)
+#define FIFO_CONFIG_1          UINT16_C(0x003E)
 
 /*! Mask for fifo_sub_sampling and data_select settings */
-#define FIFO_CONFIG_2         UINT16_C(0x00C0)
+#define FIFO_CONFIG_2          UINT16_C(0x00C0)
 
 /*! Mask for fwtm_en and ffull_en settings */
-#define FIFO_INT_CTRL         UINT16_C(0x0300)
+#define FIFO_INT_CTRL          UINT16_C(0x0300)
 
 /*! FIFO Header */
 /*! FIFO temperature pressure header frame */
-#define FIFO_TEMP_PRESS_FRAME UINT8_C(0x94)
+#define FIFO_TEMP_PRESS_FRAME  UINT8_C(0x94)
 
 /*! FIFO temperature header frame */
-#define FIFO_TEMP_FRAME       UINT8_C(0x90)
+#define FIFO_TEMP_FRAME        UINT8_C(0x90)
 
 /*! FIFO pressure header frame */
-#define FIFO_PRESS_FRAME      UINT8_C(0x84)
+#define FIFO_PRESS_FRAME       UINT8_C(0x84)
 
 /*! FIFO time header frame */
-#define FIFO_TIME_FRAME       UINT8_C(0xA0)
+#define FIFO_TIME_FRAME        UINT8_C(0xA0)
 
 /*! FIFO error header frame */
-#define FIFO_ERROR_FRAME      UINT8_C(0x44)
+#define FIFO_ERROR_FRAME       UINT8_C(0x44)
 
 /*! FIFO configuration change header frame */
-#define FIFO_CONFIG_CHANGE    UINT8_C(0x48)
+#define FIFO_CONFIG_CHANGE     UINT8_C(0x48)
 
 /***************** Static function declarations ******************************/
 
@@ -740,7 +740,7 @@ int8_t bmp3_init(struct bmp3_dev *dev)
         if (rslt == BMP3_OK)
         {
             /* Check for chip id validity */
-            if (chip_id == BMP3_CHIP_ID)
+            if ((chip_id == BMP3_CHIP_ID) || (chip_id == BMP390_CHIP_ID))
             {
                 dev->chip_id = chip_id;
 
@@ -848,6 +848,7 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, co
             {
                 temp_len = len;
             }
+
             rslt = dev->write(dev->dev_id, reg_addr[0], temp_buff, temp_len);
 
             /* Check for communication error */
@@ -889,16 +890,19 @@ int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev)
             /* Set the power control settings */
             rslt = set_pwr_ctrl_settings(desired_settings, dev);
         }
+
         if (are_settings_changed(ODR_FILTER, desired_settings) && (!rslt))
         {
             /* Set the over sampling, odr and filter settings*/
             rslt = set_odr_filter_settings(desired_settings, dev);
         }
+
         if (are_settings_changed(INT_CTRL, desired_settings) && (!rslt))
         {
             /* Set the interrupt control settings */
             rslt = set_int_ctrl_settings(desired_settings, dev);
         }
+
         if (are_settings_changed(ADV_SETT, desired_settings) && (!rslt))
         {
             /* Set the advance settings */
@@ -926,6 +930,7 @@ int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev)
     if (rslt == BMP3_OK)
     {
         rslt = bmp3_get_regs(BMP3_INT_CTRL_ADDR, settings_data, BMP3_GEN_SETT_LEN, dev);
+
         if (rslt == BMP3_OK)
         {
             /* Parse the settings data */
@@ -956,6 +961,7 @@ int8_t bmp3_set_fifo_settings(uint16_t desired_settings, const struct bmp3_dev *
     if ((rslt == BMP3_OK) && (dev->fifo != NULL))
     {
         rslt = bmp3_get_regs(reg_addr[0], fifo_sett, len, dev);
+
         if (rslt == BMP3_OK)
         {
             if (are_settings_changed(FIFO_CONFIG_1, desired_settings))
@@ -963,11 +969,13 @@ int8_t bmp3_set_fifo_settings(uint16_t desired_settings, const struct bmp3_dev *
                 /* Fill the FIFO config 1 register data */
                 fill_fifo_config_1(desired_settings, &fifo_sett[0], &dev->fifo->settings);
             }
+
             if (are_settings_changed(desired_settings, FIFO_CONFIG_2))
             {
                 /* Fill the FIFO config 2 register data */
                 fill_fifo_config_2(desired_settings, &fifo_sett[1], &dev->fifo->settings);
             }
+
             if (are_settings_changed(desired_settings, FIFO_INT_CTRL))
             {
                 /* Fill the FIFO interrupt ctrl register data */
@@ -1027,6 +1035,7 @@ int8_t bmp3_get_fifo_data(const struct bmp3_dev *dev)
     struct bmp3_fifo *fifo = dev->fifo;
 
     rslt = null_ptr_check(dev);
+
     if ((rslt == BMP3_OK) && (fifo != NULL))
     {
         reset_fifo_index(dev->fifo);
@@ -1042,6 +1051,7 @@ int8_t bmp3_get_fifo_data(const struct bmp3_dev *dev)
 
         /* Update the fifo length in the fifo structure */
         dev->fifo->data.byte_count = fifo_len;
+
         if (rslt == BMP3_OK)
         {
             /* Read the fifo data */
@@ -1068,9 +1078,11 @@ int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev)
     uint16_t watermark_len;
 
     rslt = null_ptr_check(dev);
+
     if ((rslt == BMP3_OK) && (dev->fifo != NULL))
     {
         rslt = convert_frames_to_bytes(&watermark_len, dev);
+
         if (rslt == BMP3_OK)
         {
             reg_data[0] = BMP3_GET_LSB(watermark_len);
@@ -1096,6 +1108,7 @@ int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev)
     struct bmp3_uncomp_data uncomp_data;
 
     rslt = null_ptr_check(dev);
+
     if ((rslt == BMP3_OK) && (dev->fifo != NULL) && (data != NULL))
     {
         while ((parsed_frames < (dev->fifo->data.req_frames)) && (byte_index < dev->fifo->data.byte_count))
@@ -1144,6 +1157,7 @@ int8_t bmp3_get_status(struct bmp3_dev *dev)
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
+
     if (rslt == BMP3_OK)
     {
         rslt = get_sensor_status(dev);
@@ -1174,6 +1188,7 @@ int8_t bmp3_get_fifo_length(uint16_t *fifo_length, const struct bmp3_dev *dev)
     uint8_t reg_data[2];
 
     rslt = null_ptr_check(dev);
+
     if (rslt == BMP3_OK)
     {
         rslt = bmp3_get_regs(BMP3_FIFO_LENGTH_ADDR, reg_data, 2, dev);
@@ -1255,6 +1270,7 @@ int8_t bmp3_set_op_mode(struct bmp3_dev *dev)
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
+
     if (rslt == BMP3_OK)
     {
         rslt = bmp3_get_op_mode(&last_set_mode, dev);
@@ -1300,6 +1316,7 @@ int8_t bmp3_get_op_mode(uint8_t *op_mode, const struct bmp3_dev *dev)
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
+
     if (rslt == BMP3_OK)
     {
         /* Read the power mode register */
@@ -1328,10 +1345,12 @@ int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *comp_data, st
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
+
     if ((rslt == BMP3_OK) && (comp_data != NULL))
     {
         /* Read the pressure and temperature data from the sensor */
         rslt = bmp3_get_regs(BMP3_DATA_ADDR, reg_data, BMP3_P_T_DATA_LEN, dev);
+
         if (rslt == BMP3_OK)
         {
             /* Parse the read data from the sensor */
@@ -1395,13 +1414,18 @@ static int8_t convert_frames_to_bytes(uint16_t *watermark_len, const struct bmp3
 static void reset_fifo_index(struct bmp3_fifo *fifo)
 {
     /* Loop variable */
-    uint16_t i;
+    uint16_t index;
 
-    for (i = 0; i < 512; i++)
+    /* Variable for FIFO size */
+    uint16_t fifo_size = 512;
+
+    /* The size of FIFO in BMP3 is 512 bytes */
+    for (index = 0; index < fifo_size; index++)
     {
         /* Initialize data buffer to zero */
-        fifo->data.buffer[i] = 0;
+        fifo->data.buffer[index] = 0;
     }
+
     fifo->data.byte_count = 0;
     fifo->data.start_idx = 0;
     fifo->data.parsed_frames = 0;
@@ -1523,16 +1547,19 @@ static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buff
     data_xlsb = (uint32_t)fifo_buffer[0];
     data_lsb = (uint32_t)fifo_buffer[1] << 8;
     data_msb = (uint32_t)fifo_buffer[2] << 16;
+
     if (sensor_comp == BMP3_TEMP)
     {
         /* Update uncompensated temperature */
         uncomp_data->temperature = data_msb | data_lsb | data_xlsb;
     }
+
     if (sensor_comp == BMP3_PRESS)
     {
         /* Update uncompensated pressure */
         uncomp_data->pressure = data_msb | data_lsb | data_xlsb;
     }
+
     if (sensor_comp == (BMP3_TEMP | BMP3_PRESS))
     {
         uncomp_data->temperature = data_msb | data_lsb | data_xlsb;
@@ -1630,6 +1657,7 @@ static int8_t put_device_to_sleep(const struct bmp3_dev *dev)
     uint8_t op_mode_reg_val;
 
     rslt = bmp3_get_regs(BMP3_PWR_CTRL_ADDR, &op_mode_reg_val, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         /* Set the power mode */
@@ -1650,6 +1678,7 @@ static int8_t validate_normal_mode_settings(struct bmp3_dev *dev)
     int8_t rslt;
 
     rslt = get_odr_filter_settings(dev);
+
     if (rslt == BMP3_OK)
     {
         rslt = validate_osr_and_odr_settings(dev);
@@ -1774,6 +1803,7 @@ static int8_t set_pwr_ctrl_settings(uint32_t desired_settings, const struct bmp3
     uint8_t reg_data;
 
     rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         if (desired_settings & BMP3_PRESS_EN_SEL)
@@ -1782,6 +1812,7 @@ static int8_t set_pwr_ctrl_settings(uint32_t desired_settings, const struct bmp3
              * register variable */
             reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_PRESS_EN, dev->settings.press_en);
         }
+
         if (desired_settings & BMP3_TEMP_EN_SEL)
         {
             /* Set the temperature enable settings in the
@@ -1812,6 +1843,7 @@ static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_dev
     uint8_t len = 0;
 
     rslt = bmp3_get_regs(BMP3_OSR_ADDR, reg_data, 4, dev);
+
     if (rslt == BMP3_OK)
     {
         if (are_settings_changed((BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL), desired_settings))
@@ -1820,24 +1852,28 @@ static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_dev
             * register data to be written in the sensor */
             fill_osr_data(desired_settings, reg_addr, reg_data, &len, dev);
         }
+
         if (are_settings_changed(BMP3_ODR_SEL, desired_settings))
         {
             /* Fill the output data rate register address and
              * register data to be written in the sensor */
             fill_odr_data(reg_addr, reg_data, &len, dev);
         }
+
         if (are_settings_changed(BMP3_IIR_FILTER_SEL, desired_settings))
         {
             /* Fill the iir filter register address and
              * register data to be written in the sensor */
             fill_filter_data(reg_addr, reg_data, &len, dev);
         }
+
         if (dev->settings.op_mode == BMP3_NORMAL_MODE)
         {
             /* For normal mode, osr and odr settings should
              * be proper */
             rslt = validate_osr_and_odr_settings(dev);
         }
+
         if (rslt == BMP3_OK)
         {
             /* Burst write the over sampling, odr and filter
@@ -1863,29 +1899,35 @@ static int8_t set_int_ctrl_settings(uint32_t desired_settings, const struct bmp3
 
     reg_addr = BMP3_INT_CTRL_ADDR;
     rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         int_settings = dev->settings.int_settings;
+
         if (desired_settings & BMP3_OUTPUT_MODE_SEL)
         {
             /* Set the interrupt output mode bits */
             reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_INT_OUTPUT_MODE, int_settings.output_mode);
         }
+
         if (desired_settings & BMP3_LEVEL_SEL)
         {
             /* Set the interrupt level bits */
             reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_LEVEL, int_settings.level);
         }
+
         if (desired_settings & BMP3_LATCH_SEL)
         {
             /* Set the interrupt latch bits */
             reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_LATCH, int_settings.latch);
         }
+
         if (desired_settings & BMP3_DRDY_EN_SEL)
         {
             /* Set the interrupt data ready bits */
             reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_DRDY_EN, int_settings.drdy_en);
         }
+
         rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
     }
 
@@ -1905,6 +1947,7 @@ static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_
 
     reg_addr = BMP3_IF_CONF_ADDR;
     rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         if (desired_settings & BMP3_I2C_WDT_EN_SEL)
@@ -1912,11 +1955,13 @@ static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_
             /* Set the i2c watch dog enable bits */
             reg_data = BMP3_SET_BITS(reg_data, BMP3_I2C_WDT_EN, adv_settings.i2c_wdt_en);
         }
+
         if (desired_settings & BMP3_I2C_WDT_SEL_SEL)
         {
             /* Set the i2c watch dog select bits */
             reg_data = BMP3_SET_BITS(reg_data, BMP3_I2C_WDT_SEL, adv_settings.i2c_wdt_sel);
         }
+
         rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
     }
 
@@ -1948,7 +1993,11 @@ static int8_t get_odr_filter_settings(struct bmp3_dev *dev)
 static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev)
 {
     int8_t rslt;
-    uint16_t meas_t = 0;
+
+    /* According to BMP388 datasheet at Section 3.9.2. "Measurement rate in
+     * forced mode and normal mode" there is also the constant of 234us also to
+     * be considered in the sum. */
+    uint16_t meas_t = 234;
 
     /* Odr values in milli secs  */
     uint32_t odr[18] = {
@@ -1960,11 +2009,13 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev)
         /* Calculate the pressure measurement duration */
         meas_t = calculate_press_meas_time(dev);
     }
+
     if (dev->settings.temp_en)
     {
         /* Calculate the temperature measurement duration */
         meas_t += calculate_temp_meas_time(dev);
     }
+
     rslt = verify_meas_time_and_odr_duration(meas_t, odr[dev->settings.odr_filter.odr]);
 
     return rslt;
@@ -2156,12 +2207,12 @@ static int8_t compensate_data(uint8_t sensor_comp,
             /* Compensate the temperature data */
             comp_data->temperature = compensate_temperature(uncomp_data, calib_data);
         }
+
         if (sensor_comp & BMP3_PRESS)
         {
             /* Compensate the pressure data */
             comp_data->pressure = compensate_pressure(uncomp_data, calib_data);
         }
-
     }
     else
     {
@@ -2517,16 +2568,19 @@ static void fill_fifo_config_1(uint16_t desired_settings, uint8_t *reg_data, str
         /* Fill the FIFO mode register data */
         *reg_data = BMP3_SET_BITS_POS_0(*reg_data, BMP3_FIFO_MODE, dev_fifo->mode);
     }
+
     if (desired_settings & BMP3_FIFO_STOP_ON_FULL_EN_SEL)
     {
         /* Fill the stop on full data */
         *reg_data = BMP3_SET_BITS(*reg_data, BMP3_FIFO_STOP_ON_FULL, dev_fifo->stop_on_full_en);
     }
+
     if (desired_settings & BMP3_FIFO_TIME_EN_SEL)
     {
         /* Fill the time enable data */
         *reg_data = BMP3_SET_BITS(*reg_data, BMP3_FIFO_TIME_EN, dev_fifo->time_en);
     }
+
     if (desired_settings & (BMP3_FIFO_PRESS_EN_SEL | BMP3_FIFO_TEMP_EN_SEL))
     {
         /* Fill the FIFO pressure enable */
@@ -2560,6 +2614,7 @@ static void fill_fifo_config_2(uint16_t desired_settings, uint8_t *reg_data, con
         /* Fill the down-sampling data */
         *reg_data = BMP3_SET_BITS_POS_0(*reg_data, BMP3_FIFO_DOWN_SAMPLING, dev_fifo->down_sampling);
     }
+
     if (desired_settings & BMP3_FIFO_FILTER_EN_SEL)
     {
         /* Fill the filter enable data */
@@ -2578,6 +2633,7 @@ static void fill_fifo_int_ctrl(uint16_t desired_settings, uint8_t *reg_data, con
         /* Fill the FIFO watermark interrupt enable data */
         *reg_data = BMP3_SET_BITS(*reg_data, BMP3_FIFO_FWTM_EN, dev_fifo->fwtm_en);
     }
+
     if (desired_settings & BMP3_FIFO_FULL_EN_SEL)
     {
         /* Fill the FIFO full interrupt enable data */
@@ -2597,6 +2653,7 @@ static int8_t get_sensor_status(struct bmp3_dev *dev)
 
     reg_addr = BMP3_SENS_STATUS_REG_ADDR;
     rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         dev->status.sensor.cmd_rdy = BMP3_GET_BITS(reg_data, BMP3_STATUS_CMD_RDY);
@@ -2620,6 +2677,7 @@ static int8_t get_int_status(struct bmp3_dev *dev)
     uint8_t reg_data;
 
     rslt = bmp3_get_regs(BMP3_INT_STATUS_REG_ADDR, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         dev->status.intr.fifo_wm = BMP3_GET_BITS_POS_0(reg_data, BMP3_INT_STATUS_FWTM);
@@ -2640,6 +2698,7 @@ static int8_t get_err_status(struct bmp3_dev *dev)
     uint8_t reg_data;
 
     rslt = bmp3_get_regs(BMP3_ERR_REG_ADDR, &reg_data, 1, dev);
+
     if (rslt == BMP3_OK)
     {
         dev->status.err.cmd = BMP3_GET_BITS_POS_0(reg_data, BMP3_ERR_FATAL);

@@ -30,9 +30,9 @@
 * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 *
-* @file bmp3_selftest.c
-* @date 10/01/2020
-* @version  1.2.1
+* @file       bmp3_selftest.c
+* @date       2020-05-21
+* @version    v1.2.4
 *
 */
 
@@ -41,30 +41,30 @@
 #ifndef BMP3_DOUBLE_PRECISION_COMPENSATION
 
 /* 0 degree celsius */
-#define BMP3_MIN_TEMPERATURE INT16_C(0)
+#define BMP3_MIN_TEMPERATURE  INT16_C(0)
 
 /* 40 degree celsius */
-#define BMP3_MAX_TEMPERATURE INT16_C(4000)
+#define BMP3_MAX_TEMPERATURE  INT16_C(4000)
 
 /* 900 hecto Pascals */
-#define BMP3_MIN_PRESSURE    UINT32_C(90000)
+#define BMP3_MIN_PRESSURE     UINT32_C(90000)
 
 /* 1100 hecto Pascals */
-#define BMP3_MAX_PRESSURE    UINT32_C(110000)
+#define BMP3_MAX_PRESSURE     UINT32_C(110000)
 
 #else
 
 /* 0 degree celsius */
-#define BMP3_MIN_TEMPERATURE (0.0f)
+#define BMP3_MIN_TEMPERATURE  (0.0f)
 
 /* 40 degree celsius */
-#define BMP3_MAX_TEMPERATURE (40.0f)
+#define BMP3_MAX_TEMPERATURE  (40.0f)
 
 /* 900 hecto Pascals */
-#define BMP3_MIN_PRESSURE    (900.0f)
+#define BMP3_MIN_PRESSURE     (900.0f)
 
 /* 1100 hecto Pascals */
-#define BMP3_MAX_PRESSURE    (1100.0f)
+#define BMP3_MAX_PRESSURE     (1100.0f)
 #endif
 
 /*!
@@ -101,7 +101,7 @@ static int8_t validate_trimming_param(const struct bmp3_dev *dev);
 /*!
  * @brief       Self-test API for the BMP38X
  */
-int8_t bmp3_selftest_check(const struct bmp3_dev *dev)
+int8_t bmp3_selftest_check(struct bmp3_dev *dev)
 {
     int8_t rslt;
 
@@ -113,19 +113,12 @@ int8_t bmp3_selftest_check(const struct bmp3_dev *dev)
 
     /* Used to select the settings user needs to change */
     uint16_t settings_sel;
-    struct bmp3_dev t_dev;
-
-    t_dev.dev_id = dev->dev_id;
-    t_dev.read = dev->read;
-    t_dev.write = dev->write;
-    t_dev.intf = dev->intf;
-    t_dev.delay_ms = dev->delay_ms;
 
     /* Reset the sensor */
     rslt = bmp3_soft_reset(dev);
     if (rslt == BMP3_SENSOR_OK)
     {
-        rslt = bmp3_init(&t_dev);
+        rslt = bmp3_init(dev);
 
         if (rslt == BMP3_E_COMM_FAIL || rslt == BMP3_E_DEV_NOT_FOUND)
         {
@@ -134,54 +127,51 @@ int8_t bmp3_selftest_check(const struct bmp3_dev *dev)
 
         if (rslt == BMP3_SENSOR_OK)
         {
-            rslt = validate_trimming_param(&t_dev);
+            rslt = validate_trimming_param(dev);
         }
 
         if (rslt == BMP3_SENSOR_OK)
         {
             /* Select the pressure and temperature sensor to be enabled */
-            t_dev.settings.press_en = BMP3_ENABLE;
-            t_dev.settings.temp_en = BMP3_ENABLE;
+            dev->settings.press_en = BMP3_ENABLE;
+            dev->settings.temp_en = BMP3_ENABLE;
 
             /* Select the output data rate and over sampling settings for pressure and temperature */
-            t_dev.settings.odr_filter.press_os = BMP3_NO_OVERSAMPLING;
-            t_dev.settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
-            t_dev.settings.odr_filter.odr = BMP3_ODR_25_HZ;
+            dev->settings.odr_filter.press_os = BMP3_NO_OVERSAMPLING;
+            dev->settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
+            dev->settings.odr_filter.odr = BMP3_ODR_25_HZ;
 
             /* Assign the settings which needs to be set in the sensor */
             settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL;
-            rslt = bmp3_set_sensor_settings(settings_sel, &t_dev);
+            rslt = bmp3_set_sensor_settings(settings_sel, dev);
             if (rslt == BMP3_SENSOR_OK)
             {
-                t_dev.settings.op_mode = BMP3_NORMAL_MODE;
-                rslt = bmp3_set_op_mode(&t_dev);
+                dev->settings.op_mode = BMP3_NORMAL_MODE;
+                rslt = bmp3_set_op_mode(dev);
                 if (rslt == BMP3_SENSOR_OK)
                 {
-                    t_dev.delay_ms(40);
+                    dev->delay_ms(40);
 
                     /* Sensor component selection */
                     sensor_comp = BMP3_PRESS | BMP3_TEMP;
 
                     /* Temperature and Pressure data are read and stored in the bmp3_data instance */
-                    rslt = bmp3_get_sensor_data(sensor_comp, &data, &t_dev);
-                }
-            }
-
-            if (rslt == BMP3_SENSOR_OK)
-            {
-                rslt = analyze_sensor_data(&data);
-
-                /* Set the power mode to sleep mode */
-                if (rslt == BMP3_SENSOR_OK)
-                {
-
-                    t_dev.settings.op_mode = BMP3_SLEEP_MODE;
-                    rslt = bmp3_set_op_mode(&t_dev);
-
+                    rslt = bmp3_get_sensor_data(sensor_comp, &data, dev);
                 }
             }
         }
 
+        if (rslt == BMP3_SENSOR_OK)
+        {
+            rslt = analyze_sensor_data(&data);
+
+            /* Set the power mode to sleep mode */
+            if (rslt == BMP3_SENSOR_OK)
+            {
+                dev->settings.op_mode = BMP3_SLEEP_MODE;
+                rslt = bmp3_set_op_mode(dev);
+            }
+        }
     }
 
     return rslt;
@@ -198,6 +188,7 @@ static int8_t analyze_sensor_data(const struct bmp3_data *sens_data)
     {
         rslt = BMP3_IMPLAUSIBLE_TEMPERATURE;
     }
+
     if (rslt == BMP3_SENSOR_OK)
     {
         if ((sens_data->pressure / 100 < BMP3_MIN_PRESSURE) || (sens_data->pressure / 100 > BMP3_MAX_PRESSURE))
@@ -227,13 +218,13 @@ static int8_t validate_trimming_param(const struct bmp3_dev *dev)
         {
             crc = (uint8_t)cal_crc(crc, trim_param[i]);
         }
+
         crc = (crc ^ 0xFF);
         rslt = bmp3_get_regs(0x30, &stored_crc, 1, dev);
         if (stored_crc != crc)
         {
             rslt = BMP3_TRIMMING_DATA_OUT_OF_BOUND;
         }
-
     }
 
     return rslt;
@@ -259,6 +250,7 @@ static int8_t cal_crc(uint8_t seed, uint8_t data)
         {
             var2 = 0;
         }
+
         seed = (seed & 0x7F) << 1;
         data = (data & 0x7F) << 1;
         seed = seed ^ (uint8_t)(poly * var2);

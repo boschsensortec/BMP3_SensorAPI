@@ -6,14 +6,6 @@ This package contains the Bosch Sensortec's BMP3 pressure sensor driver (sensor 
 
 The sensor driver package includes bmp3.h, bmp3.c and bmp3_defs.h files
 
-## Version
-
-File        | Version | Date
-------------|---------|-----
-bmp3.c      |  1.1.3  | 01 July 2019
-bmp3.h      |  1.1.3  | 01 July 2019
-bmp3_defs.h |  1.1.3  | 01 July 2019
-
 ## Integration details
 
 - Integrate bmp3.h, bmp3_defs.h and bmp3.c file in to your project.
@@ -275,5 +267,3 @@ int8_t configure_and_get_fifo_data(struct bmp3_dev *dev)
     return rslt;
 }
 ```
-
-## Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
