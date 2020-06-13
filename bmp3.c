@@ -438,9 +438,9 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev);
  * @param[in] dev : Structure instance of bmp3_dev.
  *
  * @return Pressure measurement time
- * @retval Pressure measurement time in milli secs
+ * @retval Pressure measurement time in microseconds
  */
-static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev);
+static uint32_t calculate_press_meas_time(const struct bmp3_dev *dev);
 
 /*!
  * @brief This internal API calculates the temperature measurement duration of
@@ -449,22 +449,22 @@ static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev);
  * @param[in] dev : Structure instance of bmp3_dev.
  *
  * @return Temperature measurement time
- * @retval Temperature measurement time in millisecs
+ * @retval Temperature measurement time in microseconds
  */
-static uint16_t calculate_temp_meas_time(const struct bmp3_dev *dev);
+static uint32_t calculate_temp_meas_time(const struct bmp3_dev *dev);
 
 /*!
  * @brief This internal API checks whether the measurement time and odr duration
  * of the sensor are proper.
  *
- * @param[in] meas_t : Pressure and temperature measurement time in millisecs.
+ * @param[in] meas_t : Pressure and temperature measurement time in microseconds.
  * @param[in] odr_duration : Duration in millisecs corresponding to the odr
  * value.
  *
  * @return Indicates whether odr and osr settings are valid or not.
  * @retval zero -> Success / +ve value -> Warning
  */
-static int8_t verify_meas_time_and_odr_duration(uint16_t meas_t, uint32_t odr_duration);
+static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_duration);
 
 /*!
  * @brief This internal API puts the device to sleep mode.
@@ -1997,17 +1997,17 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev)
     /* According to BMP388 datasheet at Section 3.9.2. "Measurement rate in
      * forced mode and normal mode" there is also the constant of 234us also to
      * be considered in the sum. */
-    uint16_t meas_t = 234;
+    uint32_t meas_t = 234;
 
-    /* Odr values in milli secs  */
+    /* Odr values in microseconds  */
     uint32_t odr[18] = {
-        5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480, 40960, 81920, 163840, 327680, 655360
+        5000, 10000, 20000, 40000, 80000, 160000, 320000, 640000, 1280000, 2560000, 5120000, 10240000, 20480000, 40960000, 81920000, 163840000, 327680000, 655360000
     };
 
     if (dev->settings.press_en)
     {
         /* Calculate the pressure measurement duration */
-        meas_t = calculate_press_meas_time(dev);
+        meas_t += calculate_press_meas_time(dev);
     }
 
     if (dev->settings.temp_en)
@@ -2025,7 +2025,7 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_dev *dev)
  * @brief This internal API checks whether the measurement time and odr duration
  * of the sensor are proper.
  */
-static int8_t verify_meas_time_and_odr_duration(uint16_t meas_t, uint32_t odr_duration)
+static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_duration)
 {
     int8_t rslt;
 
@@ -2048,9 +2048,9 @@ static int8_t verify_meas_time_and_odr_duration(uint16_t meas_t, uint32_t odr_du
  * @brief This internal API calculates the pressure measurement duration of the
  * sensor.
  */
-static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev)
+static uint32_t calculate_press_meas_time(const struct bmp3_dev *dev)
 {
-    uint16_t press_meas_t;
+    uint32_t press_meas_t;
     struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
 
 #ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
@@ -2061,11 +2061,9 @@ static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev)
     uint32_t partial_out;
 #endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
     partial_out = pow_bmp3(base, odr_filter.press_os);
-    press_meas_t = (uint16_t)(BMP3_PRESS_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
+    press_meas_t = BMP3_PRESS_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME;
 
-    /* convert into mill seconds */
-    press_meas_t = press_meas_t / 1000;
-
+    /* output in microseconds */
     return press_meas_t;
 }
 
@@ -2073,9 +2071,9 @@ static uint16_t calculate_press_meas_time(const struct bmp3_dev *dev)
  * @brief This internal API calculates the temperature measurement duration of
  * the sensor.
  */
-static uint16_t calculate_temp_meas_time(const struct bmp3_dev *dev)
+static uint32_t calculate_temp_meas_time(const struct bmp3_dev *dev)
 {
-    uint16_t temp_meas_t;
+    uint32_t temp_meas_t;
     struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
 
 #ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
@@ -2086,11 +2084,9 @@ static uint16_t calculate_temp_meas_time(const struct bmp3_dev *dev)
     uint32_t partial_out;
 #endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
     partial_out = pow_bmp3(base, odr_filter.temp_os);
-    temp_meas_t = (uint16_t)(BMP3_TEMP_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
+    temp_meas_t = BMP3_TEMP_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME;
 
-    /* convert into mill seconds */
-    temp_meas_t = temp_meas_t / 1000;
-
+    /* output in microseconds */
     return temp_meas_t;
 }
 
