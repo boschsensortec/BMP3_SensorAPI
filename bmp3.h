@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3.h
-* @date       2020-05-21
-* @version    v1.2.4
+* @date       2020-07-20
+* @version    v2.0.1
 *
 */
 
@@ -40,8 +40,8 @@
  * @defgroup bmp3 BMP3
  */
 
-#ifndef BMP3_H_
-#define BMP3_H_
+#ifndef _BMP3_H
+#define _BMP3_H
 
 /* Header includes */
 #include "bmp3_defs.h"
@@ -70,9 +70,9 @@ extern "C" {
  *  @param[in,out] dev : Structure instance of bmp3_dev
  *
  *  @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
 int8_t bmp3_init(struct bmp3_dev *dev);
 
@@ -93,11 +93,11 @@ int8_t bmp3_init(struct bmp3_dev *dev);
  * @param[in] dev : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_soft_reset(const struct bmp3_dev *dev);
+int8_t bmp3_soft_reset(struct bmp3_dev *dev);
 
 /**
  * \ingroup bmp3
@@ -126,24 +126,24 @@ int8_t bmp3_soft_reset(const struct bmp3_dev *dev);
  *@verbatim
  * Macros               |   Functionality
  * ---------------------|----------------------------------------------
- * BMP3_PRESS_EN_SEL    |   Enable/Disable pressure.
- * BMP3_TEMP_EN_SEL     |   Enable/Disable temperature.
- * BMP3_PRESS_OS_SEL    |   Set pressure oversampling.
- * BMP3_TEMP_OS_SEL     |   Set temperature oversampling.
- * BMP3_IIR_FILTER_SEL  |   Set IIR filter.
- * BMP3_ODR_SEL         |   Set ODR.
- * BMP3_OUTPUT_MODE_SEL |   Set either open drain or push pull
- * BMP3_LEVEL_SEL       |   Set interrupt pad to be active high or low
- * BMP3_LATCH_SEL       |   Set interrupt pad to be latched or nonlatched.
- * BMP3_DRDY_EN_SEL     |   Map/Unmap the drdy interrupt to interrupt pad.
- * BMP3_I2C_WDT_EN_SEL  |   Enable/Disable I2C internal watch dog.
- * BMP3_I2C_WDT_SEL_SEL |   Set I2C watch dog timeout delay.
+ * BMP3_SEL_PRESS_EN    |   Enable/Disable pressure.
+ * BMP3_SEL_TEMP_EN     |   Enable/Disable temperature.
+ * BMP3_SEL_PRESS_OS    |   Set pressure oversampling.
+ * BMP3_SEL_TEMP_OS     |   Set temperature oversampling.
+ * BMP3_SEL_IIR_FILTER  |   Set IIR filter.
+ * BMP3_SEL_ODR         |   Set ODR.
+ * BMP3_SEL_OUTPUT_MODE |   Set either open drain or push pull
+ * BMP3_SEL_LEVEL       |   Set interrupt pad to be active high or low
+ * BMP3_SEL_LATCH       |   Set interrupt pad to be latched or nonlatched.
+ * BMP3_SEL_DRDY_EN     |   Map/Unmap the drdy interrupt to interrupt pad.
+ * BMP3_SEL_I2C_WDT_EN  |   Enable/Disable I2C internal watch dog.
+ * BMP3_SEL_I2C_WDT     |   Set I2C watch dog timeout delay.
  *@endverbatim
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
 int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev);
 
@@ -160,9 +160,9 @@ int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev)
  * @param[in,out] dev : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
 int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
 
@@ -185,18 +185,18 @@ int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
  *@verbatim
  * dev->settings.op_mode |   Macros
  * ----------------------|-------------------
- *     0                 | BMP3_SLEEP_MODE
- *     1                 | BMP3_FORCED_MODE
- *     3                 | BMP3_NORMAL_MODE
+ *     0                 | BMP3_MODE_SLEEP
+ *     1                 | BMP3_MODE_FORCED
+ *     3                 | BMP3_MODE_NORMAL
  *@endverbatim
  *
  * @note : Before setting normal mode, valid odr and osr settings should be set
  * in the sensor by using 'bmp3_set_sensor_settings' function.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
 int8_t bmp3_set_op_mode(struct bmp3_dev *dev);
 
@@ -215,18 +215,18 @@ int8_t bmp3_set_op_mode(struct bmp3_dev *dev);
  * ------------------------------------------
  *   op_mode             |   Macros
  * ----------------------|-------------------
- *     0                 | BMP3_SLEEP_MODE
- *     1                 | BMP3_FORCED_MODE
- *     3                 | BMP3_NORMAL_MODE
+ *     0                 | BMP3_MODE_SLEEP
+ *     1                 | BMP3_MODE_FORCED
+ *     3                 | BMP3_MODE_NORMAL
  * ------------------------------------------
  *@endverbatim
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_get_op_mode(uint8_t *op_mode, const struct bmp3_dev *dev);
+int8_t bmp3_get_op_mode(uint8_t *op_mode, struct bmp3_dev *dev);
 
 /**
  * \ingroup bmp3
@@ -264,9 +264,9 @@ int8_t bmp3_get_op_mode(uint8_t *op_mode, const struct bmp3_dev *dev);
  *          if press is 9528709 it is 95287.09 Pascal.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
 int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *data, struct bmp3_dev *dev);
 
@@ -285,18 +285,18 @@ int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *data, struct 
  * @details This API writes the given data to the register address
  * of the sensor.
  *
- * @param[in] reg_addr : Register address from where the data to be written.
- * @param[in] reg_data : Pointer to data buffer which is to be written
- * in the sensor.
- * @param[in] len : No of bytes of data to write..
- * @param[in] dev : Structure instance of bmp3_dev.
+ *  @param[in] reg_addr  : Register address to where the data to be written.
+ *  @param[in] reg_data  : Pointer to data buffer which is to be written
+ *                         in the sensor.
+ *  @param[in] len       : No. of bytes of data to write.
+ *  @param[in] dev       : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, const struct bmp3_dev *dev);
+int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiRegs
@@ -306,17 +306,17 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, co
  * \endcode
  * @details This API reads the data from the given register address of the sensor.
  *
- * @param[in] reg_addr : Register address from where the data to be read
- * @param[out] reg_data : Pointer to data buffer to store the read data.
- * @param[in] length : No of bytes of data to be read.
- * @param[in] dev : Structure instance of bmp3_dev.
+ *  @param[in] reg_addr  : Register address from where the data to be read
+ *  @param[out] reg_data : Pointer to data buffer to store the read data.
+ *  @param[in] len       : No. of bytes of data to be read.
+ *  @param[in] dev       : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint16_t length, const struct bmp3_dev *dev);
+int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev);
 
 /**
  * \ingroup bmp3
@@ -346,23 +346,23 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint16_t length, const
  *@verbatim
  * Macros                          |  Functionality
  * --------------------------------|----------------------------
- * BMP3_FIFO_MODE_SEL            |  Enable/Disable FIFO
- * BMP3_FIFO_STOP_ON_FULL_EN_SEL |  Set FIFO stop on full interrupt
- * BMP3_FIFO_TIME_EN_SEL         |  Enable/Disable FIFO time
- * BMP3_FIFO_PRESS_EN_SEL        |  Enable/Disable pressure
- * BMP3_FIFO_TEMP_EN_SEL         |  Enable/Disable temperature
- * BMP3_FIFO_DOWN_SAMPLING_SEL   |  Set FIFO downsampling
- * BMP3_FIFO_FILTER_EN_SEL       |  Enable/Disable FIFO filter
- * BMP3_FIFO_FWTM_EN_SEL         |  Enable/Disable FIFO watermark interrupt
- * BMP3_FIFO_FFULL_EN_SEL        |  Enable/Disable FIFO full interrupt
+ * BMP3_SEL_FIFO_MODE              |  Enable/Disable FIFO
+ * BMP3_SEL_FIFO_STOP_ON_FULL_EN   |  Set FIFO stop on full interrupt
+ * BMP3_SEL_FIFO_TIME_EN           |  Enable/Disable FIFO time
+ * BMP3_SEL_FIFO_PRESS_EN          |  Enable/Disable pressure
+ * BMP3_SEL_FIFO_TEMP_EN           |  Enable/Disable temperature
+ * BMP3_SEL_FIFO_DOWN_SAMPLING     |  Set FIFO downsampling
+ * BMP3_SEL_FIFO_FILTER_EN         |  Enable/Disable FIFO filter
+ * BMP3_SEL_FIFO_FWTM_EN           |  Enable/Disable FIFO watermark interrupt
+ * BMP3_SEL_FIFO_FFULL_EN          |  Enable/Disable FIFO full interrupt
  *@endverbatim
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_set_fifo_settings(uint16_t desired_settings, const struct bmp3_dev *dev);
+int8_t bmp3_set_fifo_settings(uint16_t desired_settings, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
@@ -378,11 +378,11 @@ int8_t bmp3_set_fifo_settings(uint16_t desired_settings, const struct bmp3_dev *
  * @param[in,out] dev : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_get_fifo_settings(const struct bmp3_dev *dev);
+int8_t bmp3_get_fifo_settings(struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
@@ -396,11 +396,11 @@ int8_t bmp3_get_fifo_settings(const struct bmp3_dev *dev);
  * data will be stored in fifo buffer.
  *
  * @return Result of API execution status.
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_get_fifo_data(const struct bmp3_dev *dev);
+int8_t bmp3_get_fifo_data(struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
@@ -414,11 +414,11 @@ int8_t bmp3_get_fifo_data(const struct bmp3_dev *dev);
  * @param[in] dev : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status.
- * @retval Zero Success
- * @retval Postive Warning
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
  */
-int8_t bmp3_get_fifo_length(uint16_t *fifo_length, const struct bmp3_dev *dev);
+int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
@@ -435,8 +435,8 @@ int8_t bmp3_get_fifo_length(uint16_t *fifo_length, const struct bmp3_dev *dev);
  * fifo buffer to parse the temperature and pressure frames.
  *
  * @return Result of API execution status.
- * @retval Zero Success
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval <0 -> Error
  */
 int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev);
 
@@ -454,10 +454,27 @@ int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev);
  * @param[in] dev : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
- * @retval Zero Success
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval <0 -> Error
  */
-int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
+int8_t bmp3_set_fifo_watermark(struct bmp3_dev *dev);
+
+/*!
+ * \ingroup bmp3ApiFIFO
+ * \page bmp3_api_bmp3_fifo_flush bmp3_fifo_flush
+ * \code
+ * int8_t bmp3_fifo_flush(const struct bmp3_dev *dev);
+ * \endcode
+ * @details This API performs fifo flush
+ *
+ * @param[in] dev : Structure instance of bmp3_dev.
+ *
+ * @return Result of API execution status
+ * @retval 0  -> Success
+ * @retval >0 -> Warning
+ * @retval <0 -> Error
+ */
+int8_t bmp3_fifo_flush(struct bmp3_dev *dev);
 
 /**
  * \ingroup bmp3
@@ -478,8 +495,8 @@ int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
  * @param[in,out] dev : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
- * @retval Zero Success
- * @retval Negative Error
+ * @retval 0  -> Success
+ * @retval <0 -> Error
  */
 int8_t bmp3_get_status(struct bmp3_dev *dev);
 
@@ -487,4 +504,4 @@ int8_t bmp3_get_status(struct bmp3_dev *dev);
 }
 #endif /* End of CPP guard */
 
-#endif /* BMP3_H_ */
+#endif /* _BMP3_H */

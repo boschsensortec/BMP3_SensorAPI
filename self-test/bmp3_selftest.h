@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3_selftest.h
-* @date       2020-05-21
-* @version    v1.2.4
+* @date       2020-07-20
+* @version    v2.0.1
 *
 */
 

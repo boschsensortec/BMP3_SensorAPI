@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3_selftest.c
-* @date       2020-05-21
-* @version    v1.2.4
+* @date       2020-07-20
+* @version    v2.0.1
 *
 */
 
@@ -96,7 +96,7 @@ static int8_t cal_crc(uint8_t seed, uint8_t data);
  * @retval      0   Success
  *
  */
-static int8_t validate_trimming_param(const struct bmp3_dev *dev);
+static int8_t validate_trimming_param(struct bmp3_dev *dev);
 
 /*!
  * @brief       Self-test API for the BMP38X
@@ -142,15 +142,15 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
             dev->settings.odr_filter.odr = BMP3_ODR_25_HZ;
 
             /* Assign the settings which needs to be set in the sensor */
-            settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL;
+            settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR;
             rslt = bmp3_set_sensor_settings(settings_sel, dev);
             if (rslt == BMP3_SENSOR_OK)
             {
-                dev->settings.op_mode = BMP3_NORMAL_MODE;
+                dev->settings.op_mode = BMP3_MODE_NORMAL;
                 rslt = bmp3_set_op_mode(dev);
                 if (rslt == BMP3_SENSOR_OK)
                 {
-                    dev->delay_ms(40);
+                    dev->delay_us(40000, dev->intf_ptr);
 
                     /* Sensor component selection */
                     sensor_comp = BMP3_PRESS | BMP3_TEMP;
@@ -168,7 +168,7 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
             /* Set the power mode to sleep mode */
             if (rslt == BMP3_SENSOR_OK)
             {
-                dev->settings.op_mode = BMP3_SLEEP_MODE;
+                dev->settings.op_mode = BMP3_MODE_SLEEP;
                 rslt = bmp3_set_op_mode(dev);
             }
         }
@@ -203,7 +203,7 @@ static int8_t analyze_sensor_data(const struct bmp3_data *sens_data)
 /*
  * @brief Function to verify the trimming parameters
  * */
-static int8_t validate_trimming_param(const struct bmp3_dev *dev)
+static int8_t validate_trimming_param(struct bmp3_dev *dev)
 {
     int8_t rslt;
     uint8_t crc = 0xFF;
@@ -211,7 +211,7 @@ static int8_t validate_trimming_param(const struct bmp3_dev *dev)
     uint8_t trim_param[21];
     uint8_t i;
 
-    rslt = bmp3_get_regs(BMP3_CALIB_DATA_ADDR, trim_param, 21, dev);
+    rslt = bmp3_get_regs(BMP3_REG_CALIB_DATA, trim_param, 21, dev);
     if (rslt == BMP3_SENSOR_OK)
     {
         for (i = 0; i < 21; i++)

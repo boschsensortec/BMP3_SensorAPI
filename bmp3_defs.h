@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3_defs.h
-* @date       2020-05-21
-* @version    v1.2.4
+* @date       2020-07-20
+* @version    v2.0.1
 *
 */
 
@@ -107,46 +107,63 @@ extern "C" {
 
 /********************************************************/
 /**\name Macro definitions */
+
+/**
+ * BMP3_INTF_RET_TYPE is the read/write interface return type which can be overwritten by the build system.
+ */
+#ifndef BMP3_INTF_RET_TYPE
+#define BMP3_INTF_RET_TYPE                      int8_t
+#endif
+
+/**
+ * The last error code from read/write interface is stored in the device structure as intf_rslt.
+ */
+#ifndef BMP3_INTF_RET_SUCCESS
+#define BMP3_INTF_RET_SUCCESS                   INT8_C(0)
+#endif
+
 /**\name I2C addresses */
-#define BMP3_I2C_ADDR_PRIM                      UINT8_C(0x76)
-#define BMP3_I2C_ADDR_SEC                       UINT8_C(0x77)
+#define BMP3_ADDR_I2C_PRIM                      UINT8_C(0x76)
+#define BMP3_ADDR_I2C_SEC                       UINT8_C(0x77)
 
 /**\name BMP3 chip identifier */
 #define BMP3_CHIP_ID                            UINT8_C(0x50)
 #define BMP390_CHIP_ID                          UINT8_C(0x60)
 
 /**\name BMP3 pressure settling time (micro secs)*/
-#define BMP3_PRESS_SETTLE_TIME                  UINT16_C(392)
+#define BMP3_SETTLE_TIME_PRESS                  UINT16_C(392)
 
 /**\name BMP3 temperature settling time (micro secs) */
-#define BMP3_TEMP_SETTLE_TIME                   UINT16_C(313)
+#define BMP3_SETTLE_TIME_TEMP                   UINT16_C(313)
 
 /**\name BMP3 adc conversion time (micro secs) */
 #define BMP3_ADC_CONV_TIME                      UINT16_C(2000)
 
 /**\name Register Address */
-#define BMP3_CHIP_ID_ADDR                       UINT8_C(0x00)
-#define BMP3_ERR_REG_ADDR                       UINT8_C(0x02)
-#define BMP3_SENS_STATUS_REG_ADDR               UINT8_C(0x03)
-#define BMP3_DATA_ADDR                          UINT8_C(0x04)
-#define BMP3_EVENT_ADDR                         UINT8_C(0x10)
-#define BMP3_INT_STATUS_REG_ADDR                UINT8_C(0x11)
-#define BMP3_FIFO_LENGTH_ADDR                   UINT8_C(0x12)
-#define BMP3_FIFO_DATA_ADDR                     UINT8_C(0x14)
-#define BMP3_FIFO_WM_ADDR                       UINT8_C(0x15)
-#define BMP3_FIFO_CONFIG_1_ADDR                 UINT8_C(0x17)
-#define BMP3_FIFO_CONFIG_2_ADDR                 UINT8_C(0x18)
-#define BMP3_INT_CTRL_ADDR                      UINT8_C(0x19)
-#define BMP3_IF_CONF_ADDR                       UINT8_C(0x1A)
-#define BMP3_PWR_CTRL_ADDR                      UINT8_C(0x1B)
-#define BMP3_OSR_ADDR                           UINT8_C(0X1C)
-#define BMP3_CALIB_DATA_ADDR                    UINT8_C(0x31)
-#define BMP3_CMD_ADDR                           UINT8_C(0x7E)
+#define BMP3_REG_CHIP_ID                        UINT8_C(0x00)
+#define BMP3_REG_ERR                            UINT8_C(0x02)
+#define BMP3_REG_SENS_STATUS                    UINT8_C(0x03)
+#define BMP3_REG_DATA                           UINT8_C(0x04)
+#define BMP3_REG_EVENT                          UINT8_C(0x10)
+#define BMP3_REG_INT_STATUS                     UINT8_C(0x11)
+#define BMP3_REG_FIFO_LENGTH                    UINT8_C(0x12)
+#define BMP3_REG_FIFO_DATA                      UINT8_C(0x14)
+#define BMP3_REG_FIFO_WM                        UINT8_C(0x15)
+#define BMP3_REG_FIFO_CONFIG_1                  UINT8_C(0x17)
+#define BMP3_REG_FIFO_CONFIG_2                  UINT8_C(0x18)
+#define BMP3_REG_INT_CTRL                       UINT8_C(0x19)
+#define BMP3_REG_IF_CONF                        UINT8_C(0x1A)
+#define BMP3_REG_PWR_CTRL                       UINT8_C(0x1B)
+#define BMP3_REG_OSR                            UINT8_C(0X1C)
+#define BMP3_REG_ODR                            UINT8_C(0x1D)
+#define BMP3_REG_CONFIG                         UINT8_C(0x1F)
+#define BMP3_REG_CALIB_DATA                     UINT8_C(0x31)
+#define BMP3_REG_CMD                            UINT8_C(0x7E)
 
 /**\name Error status macros */
-#define BMP3_FATAL_ERR                          UINT8_C(0x01)
-#define BMP3_CMD_ERR                            UINT8_C(0x02)
-#define BMP3_CONF_ERR                           UINT8_C(0x04)
+#define BMP3_ERR_FATAL                          UINT8_C(0x01)
+#define BMP3_ERR_CMD                            UINT8_C(0x02)
+#define BMP3_ERR_CONF                           UINT8_C(0x04)
 
 /**\name Status macros */
 #define BMP3_CMD_RDY                            UINT8_C(0x10)
@@ -154,9 +171,9 @@ extern "C" {
 #define BMP3_DRDY_TEMP                          UINT8_C(0x40)
 
 /**\name Power mode macros */
-#define BMP3_SLEEP_MODE                         UINT8_C(0x00)
-#define BMP3_FORCED_MODE                        UINT8_C(0x01)
-#define BMP3_NORMAL_MODE                        UINT8_C(0x03)
+#define BMP3_MODE_SLEEP                         UINT8_C(0x00)
+#define BMP3_MODE_FORCED                        UINT8_C(0x01)
+#define BMP3_MODE_NORMAL                        UINT8_C(0x03)
 
 /**\name FIFO related macros */
 /**\name FIFO enable  */
@@ -229,6 +246,12 @@ extern "C" {
 #define BMP3_ODR_0_003_HZ                       UINT8_C(0x10)
 #define BMP3_ODR_0_001_HZ                       UINT8_C(0x11)
 
+/**\name Soft reset command */
+#define BMP3_SOFT_RESET                         UINT8_C(0xB6)
+
+/**\name FIFO flush command */
+#define BMP3_FIFO_FLUSH                         UINT8_C(0xB0)
+
 /**\name API success code */
 #define BMP3_OK                                 INT8_C(0)
 
@@ -249,33 +272,32 @@ extern "C" {
 /**\name Macros to select the which sensor settings are to be set by the user.
  * These values are internal for API implementation. Don't relate this to
  * data sheet. */
-#define BMP3_PRESS_EN_SEL                       UINT16_C(1 << 1)
-#define BMP3_TEMP_EN_SEL                        UINT16_C(1 << 2)
-#define BMP3_DRDY_EN_SEL                        UINT16_C(1 << 3)
-#define BMP3_PRESS_OS_SEL                       UINT16_C(1 << 4)
-#define BMP3_TEMP_OS_SEL                        UINT16_C(1 << 5)
-#define BMP3_IIR_FILTER_SEL                     UINT16_C(1 << 6)
-#define BMP3_ODR_SEL                            UINT16_C(1 << 7)
-#define BMP3_OUTPUT_MODE_SEL                    UINT16_C(1 << 8)
-#define BMP3_LEVEL_SEL                          UINT16_C(1 << 9)
-#define BMP3_LATCH_SEL                          UINT16_C(1 << 10)
-#define BMP3_I2C_WDT_EN_SEL                     UINT16_C(1 << 11)
-#define BMP3_I2C_WDT_SEL_SEL                    UINT16_C(1 << 12)
-#define BMP3_ALL_SETTINGS                       UINT16_C(0x7FF)
+#define BMP3_SEL_PRESS_EN                       UINT16_C(1 << 1)
+#define BMP3_SEL_TEMP_EN                        UINT16_C(1 << 2)
+#define BMP3_SEL_DRDY_EN                        UINT16_C(1 << 3)
+#define BMP3_SEL_PRESS_OS                       UINT16_C(1 << 4)
+#define BMP3_SEL_TEMP_OS                        UINT16_C(1 << 5)
+#define BMP3_SEL_IIR_FILTER                     UINT16_C(1 << 6)
+#define BMP3_SEL_ODR                            UINT16_C(1 << 7)
+#define BMP3_SEL_OUTPUT_MODE                    UINT16_C(1 << 8)
+#define BMP3_SEL_LEVEL                          UINT16_C(1 << 9)
+#define BMP3_SEL_LATCH                          UINT16_C(1 << 10)
+#define BMP3_SEL_I2C_WDT_EN                     UINT16_C(1 << 11)
+#define BMP3_SEL_I2C_WDT                        UINT16_C(1 << 12)
+#define BMP3_SEL_ALL                            UINT16_C(0x7FF)
 
 /**\name Macros to select the which FIFO settings are to be set by the user
  * These values are internal for API implementation. Don't relate this to
  * data sheet.*/
-#define BMP3_FIFO_MODE_SEL                      UINT16_C(1 << 1)
-#define BMP3_FIFO_STOP_ON_FULL_EN_SEL           UINT16_C(1 << 2)
-#define BMP3_FIFO_TIME_EN_SEL                   UINT16_C(1 << 3)
-#define BMP3_FIFO_PRESS_EN_SEL                  UINT16_C(1 << 4)
-#define BMP3_FIFO_TEMP_EN_SEL                   UINT16_C(1 << 5)
-#define BMP3_FIFO_DOWN_SAMPLING_SEL             UINT16_C(1 << 6)
-#define BMP3_FIFO_FILTER_EN_SEL                 UINT16_C(1 << 7)
-#define BMP3_FIFO_FWTM_EN_SEL                   UINT16_C(1 << 8)
-#define BMP3_FIFO_FULL_EN_SEL                   UINT16_C(1 << 9)
-#define BMP3_FIFO_ALL_SETTINGS                  UINT16_C(0x3FF)
+#define BMP3_SEL_FIFO_MODE                      UINT16_C(1 << 1)
+#define BMP3_SEL_FIFO_STOP_ON_FULL_EN           UINT16_C(1 << 2)
+#define BMP3_SEL_FIFO_TIME_EN                   UINT16_C(1 << 3)
+#define BMP3_SEL_FIFO_PRESS_EN                  UINT16_C(1 << 4)
+#define BMP3_SEL_FIFO_TEMP_EN                   UINT16_C(1 << 5)
+#define BMP3_SEL_FIFO_DOWN_SAMPLING             UINT16_C(1 << 6)
+#define BMP3_SEL_FIFO_FILTER_EN                 UINT16_C(1 << 7)
+#define BMP3_SEL_FIFO_FWTM_EN                   UINT16_C(1 << 8)
+#define BMP3_SEL_FIFO_FULL_EN                   UINT16_C(1 << 9)
 
 /**\name Sensor component selection macros
  * These values are internal for API implementation. Don't relate this to
@@ -396,15 +418,58 @@ extern "C" {
 #define BMP3_GET_MSB(var)                       (uint8_t)((var & BMP3_SET_HIGH_BYTE) >> 8)
 
 /**\name Macros related to size */
-#define BMP3_CALIB_DATA_LEN                     UINT8_C(21)
-#define BMP3_P_AND_T_HEADER_DATA_LEN            UINT8_C(7)
-#define BMP3_P_OR_T_HEADER_DATA_LEN             UINT8_C(4)
-#define BMP3_P_T_DATA_LEN                       UINT8_C(6)
-#define BMP3_GEN_SETT_LEN                       UINT8_C(7)
-#define BMP3_P_DATA_LEN                         UINT8_C(3)
-#define BMP3_T_DATA_LEN                         UINT8_C(3)
-#define BMP3_SENSOR_TIME_LEN                    UINT8_C(3)
+#define BMP3_LEN_CALIB_DATA                     UINT8_C(21)
+#define BMP3_LEN_P_AND_T_HEADER_DATA            UINT8_C(7)
+#define BMP3_LEN_P_OR_T_HEADER_DATA             UINT8_C(4)
+#define BMP3_LEN_P_T_DATA                       UINT8_C(6)
+#define BMP3_LEN_GEN_SETT                       UINT8_C(7)
+#define BMP3_LEN_P_DATA                         UINT8_C(3)
+#define BMP3_LEN_T_DATA                         UINT8_C(3)
+#define BMP3_LEN_SENSOR_TIME                    UINT8_C(3)
 #define BMP3_FIFO_MAX_FRAMES                    UINT8_C(73)
+
+/*! Power control settings */
+#define BMP3_POWER_CNTL                         UINT16_C(0x0006)
+
+/*! Odr and filter settings */
+#define BMP3_ODR_FILTER                         UINT16_C(0x00F0)
+
+/*! Interrupt control settings */
+#define BMP3_INT_CTRL                           UINT16_C(0x0708)
+
+/*! Advance settings */
+#define BMP3_ADV_SETT                           UINT16_C(0x1800)
+
+/*! FIFO settings */
+
+/*! Mask for fifo_mode, fifo_stop_on_full, fifo_time_en, fifo_press_en and
+ * fifo_temp_en settings */
+#define BMP3_FIFO_CONFIG_1                      UINT16_C(0x003E)
+
+/*! Mask for fifo_sub_sampling and data_select settings */
+#define BMP3_FIFO_CONFIG_2                      UINT16_C(0x00C0)
+
+/*! Mask for fwtm_en and ffull_en settings */
+#define BMP3_FIFO_INT_CTRL                      UINT16_C(0x0300)
+
+/*! FIFO Header */
+/*! FIFO temperature pressure header frame */
+#define BMP3_FIFO_TEMP_PRESS_FRAME              UINT8_C(0x94)
+
+/*! FIFO temperature header frame */
+#define BMP3_FIFO_TEMP_FRAME                    UINT8_C(0x90)
+
+/*! FIFO pressure header frame */
+#define BMP3_FIFO_PRESS_FRAME                   UINT8_C(0x84)
+
+/*! FIFO time header frame */
+#define BMP3_FIFO_TIME_FRAME                    UINT8_C(0xA0)
+
+/*! FIFO error header frame */
+#define BMP3_FIFO_ERROR_FRAME                   UINT8_C(0x44)
+
+/*! FIFO configuration change header frame */
+#define BMP3_FIFO_CONFIG_CHANGE                 UINT8_C(0x48)
 
 /********************************************************/
 
@@ -414,7 +479,6 @@ extern "C" {
 enum bmp3_intf {
     /*! SPI interface */
     BMP3_SPI_INTF,
-
     /*! I2C interface */
     BMP3_I2C_INTF
 };
@@ -428,16 +492,43 @@ enum bmp3_intf {
 /*!
  * @brief Bus communication function pointer which should be mapped to
  * the platform specific read functions of the user
+ *
+ * @param[in]     reg_addr : 8bit register address of the sensor
+ * @param[out]    reg_data : Data from the specified address
+ * @param[in]     length   : Length of the reg_data array
+ * @param[in,out] intf_ptr : Void pointer that can enable the linking of descriptors
+ *                           for interface related callbacks
+ * @retval 0 for Success
+ * @retval Non-zero for Failure
  */
-typedef int8_t (*bmp3_read_fptr_t)(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len);
+typedef BMP3_INTF_RET_TYPE (*bmp3_read_fptr_t)(uint8_t reg_addr, uint8_t *read_data, uint32_t len, void *intf_ptr);
 
 /*!
  * @brief Bus communication function pointer which should be mapped to
  * the platform specific write functions of the user
+ *
+ * @param[in]     reg_addr : 8bit register address of the sensor
+ * @param[out]    reg_data : Data to the specified address
+ * @param[in]     length   : Length of the reg_data array
+ * @param[in,out] intf_ptr : Void pointer that can enable the linking of descriptors
+ *                           for interface related callbacks
+ * @retval 0 for Success
+ * @retval Non-zero for Failure
+ *
  */
-typedef int8_t (*bmp3_write_fptr_t)(uint8_t dev_id, uint8_t reg_addr, const uint8_t *data, uint16_t len);
+typedef BMP3_INTF_RET_TYPE (*bmp3_write_fptr_t)(uint8_t reg_addr, const uint8_t *read_data, uint32_t len,
+                                                void *intf_ptr);
 
-typedef void (*bmp3_delay_fptr_t)(uint32_t period);
+/*!
+ * @brief Delay function pointer which should be mapped to
+ * delay function of the user
+ *
+ * @param[in] period              : Delay in microseconds.
+ * @param[in, out] intf_ptr       : Void pointer that can enable the linking of descriptors
+ *                                  for interface related call backs
+ *
+ */
+typedef void (*bmp3_delay_us_fptr_t)(uint32_t period, void *intf_ptr);
 
 /********************************************************/
 
@@ -612,7 +703,7 @@ struct bmp3_fifo_data
 {
     /*! Data buffer of user defined length is to be mapped here
      * 512 + 4 */
-    uint8_t buffer[516];
+    uint8_t *buffer;
 
     /*! Number of bytes of data read from the fifo */
     uint16_t byte_count;
@@ -787,11 +878,22 @@ struct bmp3_dev
     /*! Chip Id */
     uint8_t chip_id;
 
-    /*! Device Id */
-    uint8_t dev_id;
+    /*!
+     * The interface pointer is used to enable the user
+     * to link their interface descriptors for reference during the
+     * implementation of the read and write interfaces to the
+     * hardware.
+     */
+    void *intf_ptr;
 
-    /*! SPI/I2C interface */
+    /*! Interface Selection
+     * For SPI, interface = BMP3_SPI_INTF
+     * For I2C, interface = BMP3_I2C_INTF
+     **/
     enum bmp3_intf intf;
+
+    /*! To store interface pointer error */
+    BMP3_INTF_RET_TYPE intf_rslt;
 
     /*! Decide SPI or I2C read mechanism */
     uint8_t dummy_byte;
@@ -803,7 +905,7 @@ struct bmp3_dev
     bmp3_write_fptr_t write;
 
     /*! Delay function pointer */
-    bmp3_delay_fptr_t delay_ms;
+    bmp3_delay_us_fptr_t delay_us;
 
     /*! Trim data */
     struct bmp3_calib_data calib_data;
