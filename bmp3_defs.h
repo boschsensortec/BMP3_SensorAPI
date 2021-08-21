@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3_defs.h
-* @date       2020-07-20
-* @version    v2.0.1
+* @date       2021-06-17
+* @version    v2.0.5
 *
 */
 
@@ -99,10 +99,12 @@ extern "C" {
 
 /********************************************************/
 /**\name Compiler switch macros */
-/**\name Uncomment the below line to use floating-point compensation */
-#ifndef BMP3_DOUBLE_PRECISION_COMPENSATION
 
-/* #define BMP3_DOUBLE_PRECISION_COMPENSATION*/
+#ifndef BMP3_64BIT_COMPENSATION /*< Check if 64bit (using BMP3_64BIT_COMPENSATION) is enabled */
+#ifndef BMP3_FLOAT_COMPENSATION /*< If 64 bit integer data type is not enabled then enable
+                                            * BMP3_FLOAT_COMPENSATION */
+#define BMP3_FLOAT_COMPENSATION
+#endif
 #endif
 
 /********************************************************/
@@ -257,17 +259,21 @@ extern "C" {
 
 /**\name API error codes */
 #define BMP3_E_NULL_PTR                         INT8_C(-1)
-#define BMP3_E_DEV_NOT_FOUND                    INT8_C(-2)
+#define BMP3_E_COMM_FAIL                        INT8_C(-2)
 #define BMP3_E_INVALID_ODR_OSR_SETTINGS         INT8_C(-3)
 #define BMP3_E_CMD_EXEC_FAILED                  INT8_C(-4)
 #define BMP3_E_CONFIGURATION_ERR                INT8_C(-5)
 #define BMP3_E_INVALID_LEN                      INT8_C(-6)
-#define BMP3_E_COMM_FAIL                        INT8_C(-7)
+#define BMP3_E_DEV_NOT_FOUND                    INT8_C(-7)
 #define BMP3_E_FIFO_WATERMARK_NOT_REACHED       INT8_C(-8)
 
 /**\name API warning codes */
-#define BMP3_W_SENSOR_NOT_ENABLED               UINT8_C(1)
-#define BMP3_W_INVALID_FIFO_REQ_FRAME_CNT       UINT8_C(2)
+#define BMP3_W_SENSOR_NOT_ENABLED               INT8_C(1)
+#define BMP3_W_INVALID_FIFO_REQ_FRAME_CNT       INT8_C(2)
+#define BMP3_W_MIN_TEMP                         INT8_C(3)
+#define BMP3_W_MAX_TEMP                         INT8_C(4)
+#define BMP3_W_MIN_PRES                         INT8_C(5)
+#define BMP3_W_MAX_PRES                         INT8_C(6)
 
 /**\name Macros to select the which sensor settings are to be set by the user.
  * These values are internal for API implementation. Don't relate this to
@@ -303,8 +309,20 @@ extern "C" {
  * These values are internal for API implementation. Don't relate this to
  * data sheet.*/
 #define BMP3_PRESS                              UINT8_C(1)
-#define BMP3_TEMP                               UINT8_C(1 << 1)
-#define BMP3_ALL                                UINT8_C(0x03)
+#define BMP3_TEMP                               UINT8_C(2)
+#define BMP3_PRESS_TEMP                         UINT8_C(3)
+
+/**\name Temperature range values in integer and float */
+#define BMP3_MIN_TEMP_INT                       INT64_C(-4000)
+#define BMP3_MAX_TEMP_INT                       INT64_C(8500)
+#define BMP3_MIN_TEMP_DOUBLE                    -40.0f
+#define BMP3_MAX_TEMP_DOUBLE                    85.0f
+
+/**\name Pressure range values in integer and float */
+#define BMP3_MIN_PRES_INT                       UINT64_C(3000000)
+#define BMP3_MAX_PRES_INT                       UINT64_C(12500000)
+#define BMP3_MIN_PRES_DOUBLE                    30000.0f
+#define BMP3_MAX_PRES_DOUBLE                    125000.0f
 
 /**\name Macros for bit masking */
 #define BMP3_ERR_FATAL_MSK                      UINT8_C(0x01)
@@ -471,6 +489,12 @@ extern "C" {
 /*! FIFO configuration change header frame */
 #define BMP3_FIFO_CONFIG_CHANGE                 UINT8_C(0x48)
 
+/*! FIFO empty frame */
+#define BMP3_FIFO_EMPTY_FRAME                   UINT8_C(0x80)
+
+/*! FIFO sensortime overhead byte count */
+#define BMP3_SENSORTIME_OVERHEAD_BYTES          UINT8_C(20)
+
 /********************************************************/
 
 /*!
@@ -537,11 +561,8 @@ typedef void (*bmp3_delay_us_fptr_t)(uint32_t period, void *intf_ptr);
  */
 struct bmp3_reg_calib_data
 {
-    /**
-     * @ Trim Variables
-     */
+    /*! Trim Variables */
 
-    /**@{*/
     uint16_t par_t1;
     uint16_t par_t2;
     int8_t par_t3;
@@ -557,8 +578,6 @@ struct bmp3_reg_calib_data
     int8_t par_p10;
     int8_t par_p11;
     int64_t t_lin;
-
-    /**@}*/
 };
 
 /*!
@@ -566,10 +585,10 @@ struct bmp3_reg_calib_data
  */
 struct bmp3_adv_settings
 {
-    /*! i2c watch dog enable */
+    /*! I2C watchdog enable */
     uint8_t i2c_wdt_en;
 
-    /*! i2c watch dog select */
+    /*! I2C watchdog select */
     uint8_t i2c_wdt_sel;
 };
 
@@ -611,13 +630,13 @@ struct bmp3_sens_status
  */
 struct bmp3_int_status
 {
-    /*! fifo watermark interrupt */
+    /*! Fifo watermark interrupt */
     uint8_t fifo_wm;
 
-    /*! fifo full interrupt */
+    /*! Fifo full interrupt */
     uint8_t fifo_full;
 
-    /*! data ready interrupt */
+    /*! Data ready interrupt */
     uint8_t drdy;
 };
 
@@ -626,13 +645,13 @@ struct bmp3_int_status
  */
 struct bmp3_err_status
 {
-    /*! fatal error */
+    /*! Fatal error */
     uint8_t fatal;
 
-    /*! command error */
+    /*! Command error */
     uint8_t cmd;
 
-    /*! configuration error */
+    /*! Configuration error */
     uint8_t conf;
 };
 
@@ -650,7 +669,7 @@ struct bmp3_status
     /*! Error status */
     struct bmp3_err_status err;
 
-    /*! power on reset status */
+    /*! Power on reset status */
     uint8_t pwr_on_rst;
 };
 
@@ -763,30 +782,15 @@ struct bmp3_fifo_settings
     uint8_t ffull_en;
 };
 
-/*!
- * @brief bmp3 bmp3 FIFO
- */
-struct bmp3_fifo
-{
-    /*! FIFO frame structure */
-    struct bmp3_fifo_data data;
-
-    /*! FIFO config structure */
-    struct bmp3_fifo_settings settings;
-};
-
-#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
+#ifdef BMP3_FLOAT_COMPENSATION
 
 /*!
  * @brief Quantized Trim Variables
  */
 struct bmp3_quantized_calib_data
 {
-    /**
-     * @ Quantized Trim Variables
-     */
+    /*! Quantized Trim Variables */
 
-    /**@{*/
     double par_t1;
     double par_t2;
     double par_t3;
@@ -802,8 +806,6 @@ struct bmp3_quantized_calib_data
     double par_p10;
     double par_p11;
     double t_lin;
-
-    /**@}*/
 };
 
 /*!
@@ -855,7 +857,7 @@ struct bmp3_calib_data
     struct bmp3_reg_calib_data reg_calib_data;
 };
 
-#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
+#endif /* BMP3_FLOAT_COMPENSATION */
 
 /*!
  * @brief bmp3 sensor structure which comprises of un-compensated temperature
@@ -864,10 +866,10 @@ struct bmp3_calib_data
 struct bmp3_uncomp_data
 {
     /*! un-compensated pressure */
-    uint32_t pressure;
+    uint64_t pressure;
 
     /*! un-compensated temperature */
-    uint32_t temperature;
+    int64_t temperature;
 };
 
 /*!
@@ -909,15 +911,6 @@ struct bmp3_dev
 
     /*! Trim data */
     struct bmp3_calib_data calib_data;
-
-    /*! Sensor Settings */
-    struct bmp3_settings settings;
-
-    /*! Sensor and interrupt status flags */
-    struct bmp3_status status;
-
-    /*! FIFO data and settings structure */
-    struct bmp3_fifo *fifo;
 };
 
 #ifdef __cplusplus

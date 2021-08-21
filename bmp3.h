@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3.h
-* @date       2020-07-20
-* @version    v2.0.1
+* @date       2021-06-17
+* @version    v2.0.5
 *
 */
 
@@ -69,7 +69,7 @@ extern "C" {
  *
  *  @param[in,out] dev : Structure instance of bmp3_dev
  *
- *  @return Result of API execution status
+ * @return Result of API execution status
  * @retval 0  -> Success
  * @retval >0 -> Warning
  * @retval <0 -> Error
@@ -109,15 +109,16 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev);
  * \ingroup bmp3ApiSensorS
  * \page bmp3_api_bmp3_set_sensor_settings bmp3_set_sensor_settings
  * \code
- * int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev);
+ * int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev);
  * \endcode
  * @details This API sets the power control(pressure enable and
  * temperature enable), over sampling, odr and filter
  * settings in the sensor.
  *
- * @param[in] dev : Structure instance of bmp3_dev.
  * @param[in] desired_settings : Variable used to select the settings which
- * are to be set in the sensor.
+ *                               are to be set in the sensor.
+ * @param[in] settings         : Structure instance of bmp3_settings
+ * @param[in] dev              : Structure instance of bmp3_dev.
  *
  * @note : Below are the macros to be used by the user for selecting the
  * desired settings. User can do OR operation of these macros for configuring
@@ -145,26 +146,27 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev);
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev);
+int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiSensorS
  * \page bmp3_api_bmp3_get_sensor_settings bmp3_get_sensor_settings
  * \code
- * int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
+ * int8_t bmp3_get_sensor_settings(struct bmp3_settings *settings, struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the power control(power mode, pressure enable and
  * temperature enable), over sampling, odr, filter, interrupt control and
  * advance settings from the sensor.
  *
- * @param[in,out] dev : Structure instance of bmp3_dev.
+ * @param[out] settings       : Structure instance of bmp3_settings
+ * @param[in] dev             : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
  * @retval 0  -> Success
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
+int8_t bmp3_get_sensor_settings(struct bmp3_settings *settings, struct bmp3_dev *dev);
 
 /**
  * \ingroup bmp3
@@ -176,11 +178,12 @@ int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
  * \ingroup bmp3ApiPowermode
  * \page bmp3_api_bmp3_set_op_mode bmp3_set_op_mode
  * \code
- * int8_t bmp3_set_op_mode(struct bmp3_dev *dev);
+ * int8_t bmp3_set_op_mode(struct bmp3_settings *settings, struct bmp3_dev *dev);
  * \endcode
  * @details This API sets the power mode of the sensor.
  *
- * @param[in] dev : Structure instance of bmp3_dev.
+ * @param[in] settings       : Structure instance of bmp3_settings
+ * @param[in] dev            : Structure instance of bmp3_dev.
  *
  *@verbatim
  * dev->settings.op_mode |   Macros
@@ -198,7 +201,7 @@ int8_t bmp3_get_sensor_settings(struct bmp3_dev *dev);
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_set_op_mode(struct bmp3_dev *dev);
+int8_t bmp3_set_op_mode(struct bmp3_settings *settings, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiPowermode
@@ -208,7 +211,7 @@ int8_t bmp3_set_op_mode(struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the power mode of the sensor.
  *
- * @param[in] dev : Structure instance of bmp3_dev.
+ * @param[in] dev      : Structure instance of bmp3_dev.
  * @param[out] op_mode : Pointer variable to store the op-mode.
  *
  *@verbatim
@@ -256,12 +259,12 @@ int8_t bmp3_get_op_mode(uint8_t *op_mode, struct bmp3_dev *dev);
  *@endverbatim
  *
  * @param[out] data : Structure instance of bmp3_data.
- * @param[in] dev : Structure instance of bmp3_dev.
+ * @param[in] dev   : Structure instance of bmp3_dev.
  *
- * @note : for fixed point the compensated temperature and pressure has a multiplication factor of 100.
- *          units are degree celsius and Pascal respectively.
- *          ie if temp is 2426 then temp is 24.26 deg C
- *          if press is 9528709 it is 95287.09 Pascal.
+ * @note : For fixed point the compensated temperature and pressure has a multiplication factor of 100.
+ *         Units are degree celsius and Pascal respectively.
+ *         ie. If temperature is 2426 then temperature is 24.26 deg C
+ *         If press is 9528709, then pressure is 95287.09 Pascal.
  *
  * @return Result of API execution status
  * @retval 0  -> Success
@@ -328,16 +331,16 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct b
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_set_fifo_settings bmp3_set_fifo_settings
  * \code
- * int8_t bmp3_set_fifo_settings(uint16_t desired_settings, const struct bmp3_dev *dev);
+ * int8_t bmp3_set_fifo_settings(uint16_t desired_settings, struct bmp3_fifo_settings *fifo_settings,
+ *                             struct bmp3_dev *dev);
  * \endcode
  * @details This API sets the fifo_config_1(fifo_mode,
  * fifo_stop_on_full, fifo_time_en, fifo_press_en, fifo_temp_en),
  * fifo_config_2(fifo_subsampling, data_select) and int_ctrl(fwtm_en, ffull_en)
  * settings in the sensor.
  *
- * @param[in] dev : Structure instance of bmp3_dev.
  * @param[in] desired_settings : Variable used to select the FIFO settings which
- * are to be set in the sensor.
+ *                               are to be set in the sensor.
  *
  * @note : Below are the macros to be used by the user for selecting the
  * desired settings. User can do OR operation of these macros for configuring
@@ -357,61 +360,72 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct b
  * BMP3_SEL_FIFO_FFULL_EN          |  Enable/Disable FIFO full interrupt
  *@endverbatim
  *
+ * @param[in] fifo_settings : Structure instance of bmp3_fifo_settings
+ * @param[in] dev           : Structure instance of bmp3_dev.
+ *
  * @return Result of API execution status
  * @retval 0  -> Success
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_set_fifo_settings(uint16_t desired_settings, struct bmp3_dev *dev);
+int8_t bmp3_set_fifo_settings(uint16_t desired_settings,
+                              const struct bmp3_fifo_settings *fifo_settings,
+                              struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_get_fifo_settings bmp3_get_fifo_settings
  * \code
- * int8_t bmp3_get_fifo_settings(const struct bmp3_dev *dev);
+ * int8_t bmp3_get_fifo_settings(struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the fifo_config_1(fifo_mode,
  * fifo_stop_on_full, fifo_time_en, fifo_press_en, fifo_temp_en),
  * fifo_config_2(fifo_subsampling, data_select) and int_ctrl(fwtm_en, ffull_en)
  * settings from the sensor.
  *
- * @param[in,out] dev : Structure instance of bmp3_dev.
+ * @param[in] fifo_settings : Structure instance of bmp3_fifo_settings
+ * @param[in] dev           : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status
  * @retval 0  -> Success
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_get_fifo_settings(struct bmp3_dev *dev);
+int8_t bmp3_get_fifo_settings(struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_get_fifo_data bmp3_get_fifo_data
  * \code
- * int8_t bmp3_get_fifo_data(const struct bmp3_dev *dev);
+ * int8_t bmp3_get_fifo_data(struct bmp3_fifo_data *fifo,
+ *                         const struct bmp3_fifo_settings *fifo_settings,
+ *                         struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the fifo data from the sensor.
  *
- * @param[in,out] dev : Structure instance of bmp3 device, where the fifo
- * data will be stored in fifo buffer.
+ * @param[in,out] fifo      : Structure instance of bmp3_fifo_data
+ * @param[in] fifo_settings : Structure instance of bmp3_fifo_settings
+ * @param[in] dev           : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
  * @retval 0  -> Success
  * @retval >0 -> Warning
  * @retval <0 -> Error
  */
-int8_t bmp3_get_fifo_data(struct bmp3_dev *dev);
+int8_t bmp3_get_fifo_data(struct bmp3_fifo_data *fifo,
+                          const struct bmp3_fifo_settings *fifo_settings,
+                          struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_get_fifo_length bmp3_get_fifo_length
  * \code
- * int8_t bmp3_get_fifo_length(uint16_t *fifo_length, const struct bmp3_dev *dev);
+ * int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the fifo length from the sensor.
  *
  * @param[out] fifo_length : Variable used to store the fifo length.
- * @param[in] dev : Structure instance of bmp3_dev.
+ * @param[in] dev          : Structure instance of bmp3_dev.
  *
  * @return Result of API execution status.
  * @retval 0  -> Success
@@ -424,40 +438,64 @@ int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev);
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_extract_fifo_data bmp3_extract_fifo_data
  * \code
- * int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev);
+ * int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_fifo_data *fifo, struct bmp3_dev *dev);
  * \endcode
  * @details This API extracts the temperature and/or pressure data from the FIFO
  * data which is already read from the fifo.
  *
  * @param[out] data : Array of bmp3_data structures where the temperature
- * and pressure frames will be stored.
- * @param[in,out] dev : Structure instance of bmp3_dev which contains the
- * fifo buffer to parse the temperature and pressure frames.
+ *                    and pressure frames will be stored.
+ * @param[in] fifo  : Structure instance of bmp3_fifo_data
+ * @param[in] dev   : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
  * @retval 0  -> Success
  * @retval <0 -> Error
  */
-int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev);
+int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_fifo_data *fifo, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
  * \page bmp3_api_bmp3_set_fifo_watermark bmp3_set_fifo_watermark
  * \code
- * int8_t bmp3_set_fifo_watermark(const struct bmp3_dev *dev);
+ * int8_t bmp3_set_fifo_watermark(const struct bmp3_fifo_data *fifo,
+ *                              const struct bmp3_fifo_settings *fifo_settings,
+ *                              struct bmp3_dev *dev);
  * \endcode
  * @details This API sets the fifo watermark length according to the frames count
  * set by the user in the device structure. Refer below for usage.
  *
- * @note: dev->fifo->data.req_frames = 50;
+ * @note: fifo.req_frames = 50;
  *
- * @param[in] dev : Structure instance of bmp3_dev
+ * @param[in] fifo          : Structure instance of bmp3_fifo_data
+ * @param[in] fifo_settings : Structure instance of bmp3_fifo_settings
+ * @param[in] dev           : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
  * @retval 0  -> Success
  * @retval <0 -> Error
  */
-int8_t bmp3_set_fifo_watermark(struct bmp3_dev *dev);
+int8_t bmp3_set_fifo_watermark(const struct bmp3_fifo_data *fifo,
+                               const struct bmp3_fifo_settings *fifo_settings,
+                               struct bmp3_dev *dev);
+
+/*!
+ * \ingroup bmp3ApiFIFO
+ * \page bmp3_api_bmp3_get_fifo_watermark bmp3_get_fifo_watermark
+ * \code
+ * int8_t bmp3_get_fifo_watermark(uint16_t *watermark_len, struct bmp3_dev *dev);
+ * \endcode
+ * @details This API gets the fifo watermark length according to the frames count
+ * set by the user in the device structure
+ *
+ * @param[in] watermark_len : Watermark level value
+ * @param[in] dev           : Structure instance of bmp3_dev
+ *
+ * @return Result of API execution status.
+ * @retval 0  -> Success
+ * @retval <0 -> Error
+ */
+int8_t bmp3_get_fifo_watermark(uint16_t *watermark_len, struct bmp3_dev *dev);
 
 /*!
  * \ingroup bmp3ApiFIFO
@@ -486,19 +524,20 @@ int8_t bmp3_fifo_flush(struct bmp3_dev *dev);
  * \ingroup bmp3ApiStatus
  * \page bmp3_api_bmp3_get_status bmp3_get_status
  * \code
- * int8_t bmp3_get_status(struct bmp3_dev *dev);
+ * int8_t bmp3_get_status(struct bmp3_status *status, struct bmp3_dev *dev);
  * \endcode
  * @details This API gets the command ready, data ready for pressure and
  * temperature and interrupt (fifo watermark, fifo full, data ready) and
  * error status from the sensor.
  *
- * @param[in,out] dev : Structure instance of bmp3_dev
+ * @param[out] status : Structure instance of bmp3_status
+ * @param[in] dev     : Structure instance of bmp3_dev
  *
  * @return Result of API execution status.
  * @retval 0  -> Success
  * @retval <0 -> Error
  */
-int8_t bmp3_get_status(struct bmp3_dev *dev);
+int8_t bmp3_get_status(struct bmp3_status *status, struct bmp3_dev *dev);
 
 #ifdef __cplusplus
 }
