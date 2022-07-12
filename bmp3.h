@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+* Copyright (c) 2022 Bosch Sensortec GmbH. All rights reserved.
 *
 * BSD-3-Clause
 *
@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3.h
-* @date       2021-06-17
-* @version    v2.0.5
+* @date       2022-04-01
+* @version    v2.0.6
 *
 */
 
@@ -59,13 +59,13 @@ extern "C" {
 
 /*!
  * \ingroup bmp3ApiInit
- * \page bmp3_api_bmp3_init bma4_init
+ * \page bmp3_api_bmp3_init bmp3_init
  * \code
  * int8_t bmp3_init(struct bmp3_dev *dev);
  * \endcode
  * @details This API is the entry point.
- *  It performs the selection of I2C/SPI read mechanism according to the
- *  selected interface and reads the chip-id and calibration data of the sensor.
+ * Performs the selection of I2C/SPI read mechanism according to the
+ * selected interface and reads the chip-id and calibration data of the sensor.
  *
  *  @param[in,out] dev : Structure instance of bmp3_dev
  *
@@ -125,7 +125,8 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev);
  * multiple settings.
  *
  *@verbatim
- * Macros               |   Functionality
+ * ---------------------|----------------------------------------------
+ * desired_settings     |   Functionality
  * ---------------------|----------------------------------------------
  * BMP3_SEL_PRESS_EN    |   Enable/Disable pressure.
  * BMP3_SEL_TEMP_EN     |   Enable/Disable temperature.
@@ -139,6 +140,7 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev);
  * BMP3_SEL_DRDY_EN     |   Map/Unmap the drdy interrupt to interrupt pad.
  * BMP3_SEL_I2C_WDT_EN  |   Enable/Disable I2C internal watch dog.
  * BMP3_SEL_I2C_WDT     |   Set I2C watch dog timeout delay.
+ * ---------------------|----------------------------------------------
  *@endverbatim
  *
  * @return Result of API execution status
@@ -186,11 +188,13 @@ int8_t bmp3_get_sensor_settings(struct bmp3_settings *settings, struct bmp3_dev 
  * @param[in] dev            : Structure instance of bmp3_dev.
  *
  *@verbatim
+ * ----------------------|-------------------
  * dev->settings.op_mode |   Macros
  * ----------------------|-------------------
  *     0                 | BMP3_MODE_SLEEP
  *     1                 | BMP3_MODE_FORCED
  *     3                 | BMP3_MODE_NORMAL
+ * ----------------------|-------------------
  *@endverbatim
  *
  * @note : Before setting normal mode, valid odr and osr settings should be set
@@ -347,8 +351,9 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct b
  * multiple settings.
  *
  *@verbatim
- * Macros                          |  Functionality
- * --------------------------------|----------------------------
+ * --------------------------------|---------------------------------------------
+ *      desired_settings           |  Functionality
+ * --------------------------------|---------------------------------------------
  * BMP3_SEL_FIFO_MODE              |  Enable/Disable FIFO
  * BMP3_SEL_FIFO_STOP_ON_FULL_EN   |  Set FIFO stop on full interrupt
  * BMP3_SEL_FIFO_TIME_EN           |  Enable/Disable FIFO time
@@ -358,6 +363,7 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct b
  * BMP3_SEL_FIFO_FILTER_EN         |  Enable/Disable FIFO filter
  * BMP3_SEL_FIFO_FWTM_EN           |  Enable/Disable FIFO watermark interrupt
  * BMP3_SEL_FIFO_FFULL_EN          |  Enable/Disable FIFO full interrupt
+ * --------------------------------|---------------------------------------------
  *@endverbatim
  *
  * @param[in] fifo_settings : Structure instance of bmp3_fifo_settings

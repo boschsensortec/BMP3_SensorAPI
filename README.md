@@ -38,7 +38,7 @@ Regarding Compensation functions for temperature and pressure, we have two imple
 1) Double precision floating point version
 2) Integer version
 
-If you want to use the floating point version, define the BMP3_DOUBLE_PRECISION_COMPENSATION macro in your makefile or uncomment the relevant line in the bmp3_defs.h file. By default, the integer version will be used. Below example code uses floating point representation.
+If you want to use the floating point version, define the BMP3_FLOAT_COMPENSATION macro in your makefile or uncomment the relevant line in the bmp3_defs.h file. By default, the integer version will be used. Below example code uses floating point representation.
 
 ### Important links
 

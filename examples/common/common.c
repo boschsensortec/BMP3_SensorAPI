@@ -1,5 +1,5 @@
 /**\
- * Copyright (c) 2021 Bosch Sensortec GmbH. All rights reserved.
+ * Copyright (c) 2022 Bosch Sensortec GmbH. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  **/
@@ -23,9 +23,11 @@ static uint8_t dev_addr;
  */
 BMP3_INTF_RET_TYPE bmp3_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr)
 {
-    uint8_t dev_addr = *(uint8_t*)intf_ptr;
+    uint8_t device_addr = *(uint8_t*)intf_ptr;
 
-    return coines_read_i2c(dev_addr, reg_addr, reg_data, (uint16_t)len);
+    (void)intf_ptr;
+
+    return coines_read_i2c(COINES_I2C_BUS_0, device_addr, reg_addr, reg_data, (uint16_t)len);
 }
 
 /*!
@@ -33,9 +35,11 @@ BMP3_INTF_RET_TYPE bmp3_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t l
  */
 BMP3_INTF_RET_TYPE bmp3_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
 {
-    uint8_t dev_addr = *(uint8_t*)intf_ptr;
+    uint8_t device_addr = *(uint8_t*)intf_ptr;
 
-    return coines_write_i2c(dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len);
+    (void)intf_ptr;
+
+    return coines_write_i2c(COINES_I2C_BUS_0, device_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len);
 }
 
 /*!
@@ -43,9 +47,11 @@ BMP3_INTF_RET_TYPE bmp3_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uin
  */
 BMP3_INTF_RET_TYPE bmp3_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr)
 {
-    uint8_t dev_addr = *(uint8_t*)intf_ptr;
+    uint8_t device_addr = *(uint8_t*)intf_ptr;
 
-    return coines_read_spi(dev_addr, reg_addr, reg_data, (uint16_t)len);
+    (void)intf_ptr;
+
+    return coines_read_spi(COINES_SPI_BUS_0, device_addr, reg_addr, reg_data, (uint16_t)len);
 }
 
 /*!
@@ -53,9 +59,11 @@ BMP3_INTF_RET_TYPE bmp3_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t l
  */
 BMP3_INTF_RET_TYPE bmp3_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
 {
-    uint8_t dev_addr = *(uint8_t*)intf_ptr;
+    uint8_t device_addr = *(uint8_t*)intf_ptr;
 
-    return coines_write_spi(dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len);
+    (void)intf_ptr;
+
+    return coines_write_spi(COINES_SPI_BUS_0, device_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len);
 }
 
 /*!
@@ -63,6 +71,8 @@ BMP3_INTF_RET_TYPE bmp3_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uin
  */
 void bmp3_delay_us(uint32_t period, void *intf_ptr)
 {
+    (void)intf_ptr;
+
     coines_delay_usec(period);
 }
 
@@ -108,7 +118,7 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)
 
     if (bmp3 != NULL)
     {
-        int16_t result = coines_open_comm_intf(COINES_COMM_INTF_USB);
+        int16_t result = coines_open_comm_intf(COINES_COMM_INTF_USB, NULL);
         if (result < COINES_SUCCESS)
         {
             printf(
@@ -128,11 +138,10 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)
             if ((board_info.shuttle_id != BMP3_SHUTTLE_ID))
             {
                 printf("! Warning invalid sensor shuttle \n ," "This application will not support this sensor \n");
-                exit(COINES_E_FAILURE);
             }
         }
 
-        coines_set_shuttleboard_vdd_vddio_config(0, 0);
+        (void)coines_set_shuttleboard_vdd_vddio_config(0, 0);
         coines_delay_msec(1000);
 
         /* Bus configuration : I2C */
@@ -143,7 +152,10 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)
             bmp3->read = bmp3_i2c_read;
             bmp3->write = bmp3_i2c_write;
             bmp3->intf = BMP3_I2C_INTF;
-            coines_config_i2c_bus(COINES_I2C_BUS_0, COINES_I2C_STANDARD_MODE);
+
+            /* SDO pin is made low */
+            (void)coines_set_pin_config(COINES_SHUTTLE_PIN_SDO, COINES_PIN_DIRECTION_OUT, COINES_PIN_VALUE_LOW);
+            (void)coines_config_i2c_bus(COINES_I2C_BUS_0, COINES_I2C_STANDARD_MODE);
         }
         /* Bus configuration : SPI */
         else if (intf == BMP3_SPI_INTF)
@@ -153,12 +165,12 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)
             bmp3->read = bmp3_spi_read;
             bmp3->write = bmp3_spi_write;
             bmp3->intf = BMP3_SPI_INTF;
-            coines_config_spi_bus(COINES_SPI_BUS_0, COINES_SPI_SPEED_7_5_MHZ, COINES_SPI_MODE0);
+            (void)coines_config_spi_bus(COINES_SPI_BUS_0, COINES_SPI_SPEED_7_5_MHZ, COINES_SPI_MODE0);
         }
 
         coines_delay_msec(1000);
 
-        coines_set_shuttleboard_vdd_vddio_config(3300, 3300);
+        (void)coines_set_shuttleboard_vdd_vddio_config(3300, 3300);
 
         coines_delay_msec(1000);
 
@@ -175,13 +187,13 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)
 
 void bmp3_coines_deinit(void)
 {
-    fflush(stdout);
+    (void)fflush(stdout);
 
-    coines_set_shuttleboard_vdd_vddio_config(0, 0);
+    (void)coines_set_shuttleboard_vdd_vddio_config(0, 0);
     coines_delay_msec(1000);
 
     /* Coines interface reset */
     coines_soft_reset();
     coines_delay_msec(1000);
-    coines_close_comm_intf(COINES_COMM_INTF_USB);
+    (void)coines_close_comm_intf(COINES_COMM_INTF_USB, NULL);
 }

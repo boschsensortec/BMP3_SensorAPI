@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+* Copyright (c) 2022 Bosch Sensortec GmbH. All rights reserved.
 *
 * BSD-3-Clause
 *
@@ -31,8 +31,8 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 * @file       bmp3.c
-* @date       2021-06-17
-* @version    v2.0.5
+* @date       2022-04-01
+* @version    v2.0.6
 *
 */
 
@@ -2951,9 +2951,9 @@ static int8_t get_err_status(struct bmp3_status *status, struct bmp3_dev *dev)
 
     if (rslt == BMP3_OK)
     {
-        status->err.cmd = BMP3_GET_BITS_POS_0(reg_data, BMP3_ERR_FATAL);
-        status->err.conf = BMP3_GET_BITS(reg_data, BMP3_ERR_CMD);
-        status->err.fatal = BMP3_GET_BITS(reg_data, BMP3_ERR_CONF);
+        status->err.fatal = BMP3_GET_BITS_POS_0(reg_data, BMP3_ERR_FATAL);
+        status->err.cmd = BMP3_GET_BITS(reg_data, BMP3_ERR_CMD);
+        status->err.conf = BMP3_GET_BITS(reg_data, BMP3_ERR_CONF);
     }
 
     return rslt;

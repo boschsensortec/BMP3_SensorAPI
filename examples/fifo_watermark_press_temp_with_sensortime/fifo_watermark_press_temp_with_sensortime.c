@@ -1,5 +1,5 @@
 /**\
- * Copyright (c) 2021 Bosch Sensortec GmbH. All rights reserved.
+ * Copyright (c) 2022 Bosch Sensortec GmbH. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  **/
@@ -32,10 +32,10 @@
 int main(void)
 {
     struct bmp3_dev dev;
-    int8_t rslt = 0;
+    int8_t rslt;
 
-    uint32_t settings_sel;
-    uint32_t settings_fifo;
+    uint16_t settings_sel;
+    uint16_t settings_fifo;
     uint8_t loop = 1;
     uint8_t index = 0;
     uint16_t watermark = 0;
